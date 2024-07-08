@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://b8g67gdo84efn"]
+
+[ext_resource type="Script" path="res://Source/Controllers/BoxController.cs" id="1_eluci"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8ka73"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_01l2s"]
+
+[node name="MainScene" type="Node3D"]
+
+[node name="Box" type="Node3D" parent="."]
+
+[node name="RigidBody3D" type="RigidBody3D" parent="Box"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Box/RigidBody3D"]
+shape = SubResource("BoxShape3D_8ka73")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Box"]
+mesh = SubResource("BoxMesh_01l2s")
+
+[node name="BoxController" type="Node3D" parent="Box"]
+script = ExtResource("1_eluci")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 3.7262, 3.59687, 3.11593)
