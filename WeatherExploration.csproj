@@ -5,4 +5,7 @@
         <TargetFramework Condition=" '$(GodotTargetPlatform)' == 'ios' ">net8.0</TargetFramework>
         <EnableDynamicLoading>true</EnableDynamicLoading>
     </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="Chickensoft.AutoInject" Version="2.1.0" />
+    </ItemGroup>
 </Project>
