@@ -1,25 +1,24 @@
-[gd_scene load_steps=4 format=3 uid="uid://b8g67gdo84efn"]
+[gd_scene load_steps=5 format=3 uid="uid://b8g67gdo84efn"]
 
-[ext_resource type="Script" path="res://Source/Controllers/BoxController.cs" id="1_eluci"]
+[ext_resource type="Script" path="res://Source/Controllers/GameController.cs" id="1_a5fhp"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_8ka73"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_txteg"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_01l2s"]
+[sub_resource type="ImageTexture" id="ImageTexture_ugi8n"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ttdh"]
+albedo_color = Color(0.270588, 1, 1, 1)
+albedo_texture = SubResource("ImageTexture_ugi8n")
 
 [node name="MainScene" type="Node3D"]
 
-[node name="Box" type="Node3D" parent="."]
-
-[node name="RigidBody3D" type="RigidBody3D" parent="Box"]
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Box/RigidBody3D"]
-shape = SubResource("BoxShape3D_8ka73")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Box"]
-mesh = SubResource("BoxMesh_01l2s")
-
-[node name="BoxController" type="Node3D" parent="Box"]
-script = ExtResource("1_eluci")
-
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 3.7262, 3.59687, 3.11593)
+
+[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("DebugPlaneMesh")]
+script = ExtResource("1_a5fhp")
+DebugPlaneMesh = NodePath("../MeshInstance3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_txteg")
+surface_material_override/0 = SubResource("StandardMaterial3D_4ttdh")
