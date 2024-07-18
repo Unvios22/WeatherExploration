@@ -13,7 +13,7 @@ config_version=5
 config/name="WeatherExploration"
 run/main_scene="res://Scenes/MainScene.tscn"
 config/features=PackedStringArray("4.2", "C#", "Forward Plus")
-boot_splash/bg_color=Color(0.844556, 0.604384, 0.292354, 1)
+boot_splash/image="res://Logo/rainbow-dark-d.png"
 config/icon="res://icon.svg"
 
 [debug]
