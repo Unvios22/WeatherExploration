@@ -6,6 +6,7 @@ public partial class UnitInteractionController : Node {
 
     private Unit _currentlySelectedUnit;
     
+    
     //todo: currently implement a simple unit manager
     
     //if unit gets clicked, select it
