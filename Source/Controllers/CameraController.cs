@@ -111,6 +111,7 @@ public partial class CameraController : Node {
         }
         
         if (@event.IsAction(InputActions.CAMERA_DRAG)) {
+            //todo: can be reworked into isActionPressed and isActionReleased
             _isDraggingInProgress = !_isDraggingInProgress;
         }
 

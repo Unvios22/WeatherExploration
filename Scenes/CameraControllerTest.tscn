@@ -1,0 +1,50 @@
+[gd_scene load_steps=8 format=3 uid="uid://b8g67gdo84efn"]
+
+[ext_resource type="Script" path="res://Source/Controllers/GameController.cs" id="1_a5fhp"]
+[ext_resource type="Script" path="res://Source/Controllers/CameraController.cs" id="1_r630k"]
+[ext_resource type="Script" path="res://Source/TerrainGeneration/Logic/TerrainGenerationController.cs" id="3_gwexk"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_4thl1"]
+
+[sub_resource type="ImageTexture" id="ImageTexture_ugi8n"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_4ttdh"]
+albedo_color = Color(0.270588, 1, 1, 1)
+albedo_texture = SubResource("ImageTexture_ugi8n")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ofbcy"]
+
+[node name="MainScene" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 3.7262, 3.59687, 3.11593)
+
+[node name="CameraController" type="Node" parent="Camera3D" node_paths=PackedStringArray("_camera", "_orbitingTarget")]
+script = ExtResource("1_r630k")
+_camera = NodePath("..")
+_orbitingTarget = NodePath("../../MeshInstance3D")
+_initialOrbitDistance = 1.0
+_maxOrbitDistance = 5.0
+_minOrbitDistance = 0.3
+_orbitDistanceChangeSpeed = 0.3
+_orbitRotationChangeSpeed = 0.1
+_orbitXRotationAngleLimit = 80.0
+
+[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("DebugPlaneMesh")]
+script = ExtResource("1_a5fhp")
+DebugPlaneMesh = NodePath("../MeshInstance3D")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_4thl1")
+surface_material_override/0 = SubResource("StandardMaterial3D_4ttdh")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.996308, -0.0858517, -2.55858e-09, 0.0625698, 0.726122, 0.684712, -0.0587837, -0.682184, 0.728813, 0, 0, 0)
+
+[node name="TerrainGenerationController" type="Node" parent="." node_paths=PackedStringArray("_terrainMesh")]
+script = ExtResource("3_gwexk")
+_terrainMesh = NodePath("../MeshInstance3D")
+_terrainMeshMaterial = SubResource("StandardMaterial3D_ofbcy")
+_meshGridResolution = 12
+_heightScale = 1.0
+_uVScale = 1.0
