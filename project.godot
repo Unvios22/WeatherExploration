@@ -16,6 +16,10 @@ config/features=PackedStringArray("4.2", "C#", "Forward Plus")
 boot_splash/image="res://Logo/rainbow-dark-d.png"
 config/icon="res://icon.svg"
 
+[autoload]
+
+Global="*res://Source/Autoload/Global.cs"
+
 [debug]
 
 settings/stdout/print_fps=true
