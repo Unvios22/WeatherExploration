@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c5k4hi3v7i6sb"]
+
+[ext_resource type="Script" path="res://Source/Temp/TempDIReceiver.cs" id="1_jv2d1"]
+
+[node name="SceneParent" type="Node3D"]
+
+[node name="DIReceiver" type="Node3D" parent="."]
+script = ExtResource("1_jv2d1")
