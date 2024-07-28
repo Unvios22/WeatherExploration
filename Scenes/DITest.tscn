@@ -1,8 +1,12 @@
-[gd_scene load_steps=2 format=3 uid="uid://c5k4hi3v7i6sb"]
+[gd_scene load_steps=3 format=3 uid="uid://c5k4hi3v7i6sb"]
 
-[ext_resource type="Script" path="res://Source/Temp/TempDIReceiver.cs" id="1_jv2d1"]
+[ext_resource type="Script" path="res://Source/DI/MainGameSceneDIConnector.cs" id="1_b4xed"]
+[ext_resource type="Script" path="res://Source/temp/DITestNode.cs" id="1_x1pg6"]
 
 [node name="SceneParent" type="Node3D"]
 
-[node name="DIReceiver" type="Node3D" parent="."]
-script = ExtResource("1_jv2d1")
+[node name="DIConnector" type="Node3D" parent="."]
+script = ExtResource("1_b4xed")
+
+[node name="Node3D" type="Node3D" parent="DIConnector"]
+script = ExtResource("1_x1pg6")
