@@ -1,13 +1,13 @@
 using Godot;
-using WeatherExploration.Source.Config;
 using WeatherExploration.Source.Helper;
 using WeatherExploration.Source.Signals;
+using WeatherExploration.Source.temp;
 
 namespace WeatherExploration.Source.Autoload;
 
 public partial class Global : Node {
 
-	private SignalBus<BaseSignal> _signalBus;
+	private SignalBus _signalBus;
 	private SceneLoader _sceneLoader;
 	
 	public override void _EnterTree() {
@@ -17,10 +17,10 @@ public partial class Global : Node {
 	}
 
 	private void InitVariables() {
-		_signalBus = new SignalBus<BaseSignal>();
-		_sceneLoader = new SceneLoader();
+		_signalBus = new SignalBus();
+		_sceneLoader = new SceneLoader(_signalBus);
 	}
 
-	public SignalBus<BaseSignal> SignalBus => _signalBus;
+	public SignalBus SignalBus => _signalBus;
 	private SceneLoader SceneLoader => _sceneLoader;
 }

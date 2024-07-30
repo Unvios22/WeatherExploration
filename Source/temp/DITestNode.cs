@@ -10,7 +10,7 @@ public partial class DITestNode : Node {
     public override void _Notification(int what) => this.Notify(what);
     
     [Dependency]
-    public SignalBus<BaseSignal> _signalBus => this.DependOn<SignalBus<BaseSignal>>();
+    public SignalBus _signalBus => this.DependOn<SignalBus>();
     
     public override void _Ready() {
         GD.Print("Test node _Ready");

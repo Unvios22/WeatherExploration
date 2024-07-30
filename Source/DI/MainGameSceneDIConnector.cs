@@ -7,10 +7,10 @@ using WeatherExploration.Source.Signals;
 namespace WeatherExploration.Source.DI;
 
 [Meta(typeof(IProvider), typeof(IAutoOn))]
-public partial class MainGameSceneDIConnector : SceneDIConnector, IProvide<SignalBus<BaseSignal>> {
+public partial class MainGameSceneDIConnector : SceneDIConnector, IProvide<SignalBus> {
     public override void _Notification(int what) => this.Notify(what);
     
-    private SignalBus<BaseSignal> _signalBus;
+    private SignalBus _signalBus;
 
     public override void _EnterTree() {
         GD.Print(nameof(MainGameSceneDIConnector) + " init");
@@ -22,7 +22,7 @@ public partial class MainGameSceneDIConnector : SceneDIConnector, IProvide<Signa
         _signalBus = global.SignalBus;
     }
     
-    SignalBus<BaseSignal> IProvide<SignalBus<BaseSignal>>.Value() => _signalBus;
+    SignalBus IProvide<SignalBus>.Value() => _signalBus;
     
     public void OnReady() => this.Provide();
 }

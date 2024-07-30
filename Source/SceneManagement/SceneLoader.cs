@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Godot;
 using WeatherExploration.Source.Config;
+using WeatherExploration.Source.Signals;
 
 namespace WeatherExploration.Source.Helper;
 
@@ -9,10 +10,13 @@ public class SceneLoader {
     private SceneInfo _currentSceneInfo;
     
     private SceneInfo _currentSceneInfoTempDeferred;
+    private SignalBus _signalBus;
     
-    public SceneLoader() {
-        FindInitialSceneRoot();
+    public SceneLoader(SignalBus signalBus) {
+        _signalBus = signalBus;
         _currentSceneInfo = Scenes.INITIAL_SCENE;
+        FindInitialSceneRoot();
+        SubToSignalBusSceneChangeSignals();
     }
 
     private void FindInitialSceneRoot() {
@@ -21,6 +25,14 @@ public class SceneLoader {
         //all autoloads and loaded scenes are siblings and direct children of root, but the scene root node is always last
         //as per https://docs.godotengine.org/en/stable/tutorials/scripting/singletons_autoload.html
         _currentScene = nodeTreeRoot.GetChildren().Last();
+    }
+
+    private void SubToSignalBusSceneChangeSignals() {
+        _signalBus.RegisterListener<ChangeSceneSignal>(OnSceneChangeSignal);
+    }
+
+    private void OnSceneChangeSignal(ChangeSceneSignal signal) {
+        
     }
     
     //TODO: current logic for loading is synchronous; add overloads for async and deferred loading
@@ -36,7 +48,7 @@ public class SceneLoader {
     private void DeferredChangeToScene() {
         var sceneInfo = _currentSceneInfoTempDeferred;
         
-        //caching tree root, beacuse the Utils class uses NodeTree.CurrentScene which is about to be null
+        //caching tree root, because the Utils class uses NodeTree.CurrentScene which is about to be null
         //TODO: refactor Utils to be more redundant in getting the base tree root
         var treeRoot = Utils.GetNodeTreeRoot();
         
