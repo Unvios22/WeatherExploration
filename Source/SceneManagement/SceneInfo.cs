@@ -1,6 +1,6 @@
 ﻿namespace WeatherExploration.Source.Helper;
 
-public class SceneInfo {
+public record SceneInfo {
     public string Name;
     public string Path;
 }
