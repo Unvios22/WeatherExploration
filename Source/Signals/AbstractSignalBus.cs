@@ -38,7 +38,7 @@ public class AbstractSignalBus<TBaseSignal> {
 
         public static void FireSignal(TSignal signal) {
             if (SignalListeners.Count == 0) {
-                throw new NoRegisteredSignalListenersException(typeof(TSignal));
+                throw new NoSignalListenersException(typeof(TSignal));
             }
             foreach (var listener in SignalListeners) {
                 listener.Invoke(signal);

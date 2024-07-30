@@ -1,4 +1,4 @@
-﻿namespace WeatherExploration.Source.Signals;
+﻿namespace WeatherExploration.Source.Signals.Types;
 
 public class BaseSignal {
     

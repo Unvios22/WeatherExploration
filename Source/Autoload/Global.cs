@@ -1,7 +1,6 @@
 using Godot;
-using WeatherExploration.Source.Helper;
+using WeatherExploration.Source.SceneManagement;
 using WeatherExploration.Source.Signals;
-using WeatherExploration.Source.temp;
 
 namespace WeatherExploration.Source.Autoload;
 

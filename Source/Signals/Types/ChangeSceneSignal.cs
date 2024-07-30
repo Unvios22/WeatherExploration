@@ -1,5 +1,7 @@
-﻿namespace WeatherExploration.Source.Signals;
+﻿using WeatherExploration.Source.Helper;
 
-public class ChangeSceneSignal : BaseSignal{
-    
+namespace WeatherExploration.Source.Signals.Types;
+
+public class ChangeSceneSignal : BaseSignal {
+    public SceneInfo TargetSceneInfo;
 }

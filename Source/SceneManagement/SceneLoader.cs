@@ -1,11 +1,14 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Godot;
 using WeatherExploration.Source.Config;
+using WeatherExploration.Source.Helper;
 using WeatherExploration.Source.Signals;
+using WeatherExploration.Source.Signals.Types;
 
-namespace WeatherExploration.Source.Helper;
+namespace WeatherExploration.Source.SceneManagement;
 
-public class SceneLoader {
+public class SceneLoader : IDisposable{
     private Node _currentScene;
     private SceneInfo _currentSceneInfo;
     
@@ -16,7 +19,7 @@ public class SceneLoader {
         _signalBus = signalBus;
         _currentSceneInfo = Scenes.INITIAL_SCENE;
         FindInitialSceneRoot();
-        SubToSignalBusSceneChangeSignals();
+        SubToSignalBusSignals();
     }
 
     private void FindInitialSceneRoot() {
@@ -27,12 +30,12 @@ public class SceneLoader {
         _currentScene = nodeTreeRoot.GetChildren().Last();
     }
 
-    private void SubToSignalBusSceneChangeSignals() {
-        _signalBus.RegisterListener<ChangeSceneSignal>(OnSceneChangeSignal);
+    private void SubToSignalBusSignals() {
+        _signalBus.RegisterListener<ChangeSceneSignal>(OnChangeSceneSignal);
     }
 
-    private void OnSceneChangeSignal(ChangeSceneSignal signal) {
-        
+    private void OnChangeSceneSignal(ChangeSceneSignal signal) {
+        ChangeToScene(signal.TargetSceneInfo);
     }
     
     //TODO: current logic for loading is synchronous; add overloads for async and deferred loading
@@ -64,6 +67,10 @@ public class SceneLoader {
 
         //update displayed current scene data
         _currentSceneInfo = sceneInfo;
+    }
+    
+    public void Dispose() {
+        _signalBus.RemoveListener<ChangeSceneSignal>(OnChangeSceneSignal);
     }
     
     public SceneInfo CurrentSceneInfo => _currentSceneInfo;
