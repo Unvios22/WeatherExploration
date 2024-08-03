@@ -1,34 +1,35 @@
-﻿using Chickensoft.GodotNodeInterfaces;
-using Chickensoft.AutoInject;
+﻿using Chickensoft.AutoInject;
 using Chickensoft.Introspection;
 using Godot;
+using WeatherExploration.Source.Unit.Logic;
 using WeatherExploration.Source.Unit.Model;
 
-namespace WeatherExploration.Source.Unit.Logic;
+namespace WeatherExploration.Source.Unit;
 
-[Meta(typeof(IAutoConnect))]
-public partial class Unit : Node {
+[Meta(typeof(IAutoNode))]
+public partial class Unit : Node3D {
     public override void _Notification(int what) => this.Notify(what);
     
-    [Export] private UnitData _unitData;
     [Node("RigidBody3D")] public CollisionObject3D UnitCollisionObject { get; set; }
+    
+    [Export] private UnitData _unitData;
 
-    public override void _Ready() {
-        SubscribeToChildrenEvents();
+    [Dependency]
+    private IUnitInteractionController UnitInteractionController => this.DependOn<IUnitInteractionController>();
+    
+    private const float WaypointCollisionDistance = 0.02f;
+
+    public void OnResolved() {
+        CreateColliderCallbackSignals();
     }
-
-    private void OnCollisionObjectClicked(Node camera, InputEvent @event, Vector3 position, Vector3 normal, long shapeidx) {
-        //todo: implement proper checking for mouse clicks
-        GD.Print("Unit clicked at mouse position:" + position);
-    }
-
-    private void SubscribeToChildrenEvents() {
-        //TODO: check if the chickensoft di package does this better
-        UnitCollisionObject.InputEvent += OnCollisionObjectClicked;
-    }
-
-    private void UnsubscribeFromChildrenEvents() {
-        //TODO: unsubscribe from event properly to avoid overloading the GC or getting memory leaks
+    
+    private void CreateColliderCallbackSignals() {
+        UnitCollisionObject.MouseEntered += () => { UnitInteractionController.OnUnitHoverStart(this);};
+        UnitCollisionObject.MouseExited += () => { UnitInteractionController.OnUnitHoverStop(this);};
+        
+        //TODO: the anonymous callbacks aren't ever unsubscribed; *shouldn't* cause memory leaks since the only time both 
+        //the Unit Node and the collision object are deleted is when they're both being removed from the scene
+        //Still, make sure it's safe and will work expectedly
     }
 
     public override void _Process(double delta) {
@@ -36,20 +37,36 @@ public partial class Unit : Node {
     }
 
     private void ProcessUnitBehavior() {
-        ApplyCurrentCellEffects();
-        ApplyUnitModifiers();
-        ApplyUnitMovement();
+        //
+        // if (IsCurrentWaypointWithinCollision()) {
+        //     AchieveCurrentWaypoint();
+        // }
+        //
+        // if (_unitData.UnitStatus == UnitStatus.Idle) {
+        //     return;
+        // }
+        //
+        // if (_unitData.RouteWaypoints.Count == 0) {
+        //     HandleUnitHasNoWaypoints();
+        // }
+
     }
 
-    private void ApplyCurrentCellEffects() {
-        
+    private bool IsCurrentWaypointWithinCollision() {
+        var nextWaypoint = _unitData.RouteWaypoints.Peek();
+        var distanceToWaypoint = GlobalPosition.DistanceTo(nextWaypoint.Position);
+        return distanceToWaypoint <= WaypointCollisionDistance;
+    }
+    
+    private void AchieveCurrentWaypoint() {
+        _unitData.RouteWaypoints.Dequeue();
     }
 
-    private void ApplyUnitModifiers() {
-        
+    private void HandleUnitHasNoWaypoints() {
+        _unitData.UnitStatus = UnitStatus.Idle;
     }
-
-    private void ApplyUnitMovement() {
+    
+    private void MoveTowardsCurrentWaypoint() {
         
     }
     

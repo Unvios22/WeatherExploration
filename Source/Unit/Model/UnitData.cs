@@ -19,6 +19,9 @@ public partial class UnitData : Resource {
     [Export] public Vector2I CurrentGridCell;
     [Export] public Vector3 WorldSpacePos;
     
+    [Export] public float UnitMoveSpeed;
+    [Export] public int UnitTraversalEfficiency;
+    
     public Queue<UnitWaypoint> RouteWaypoints;
     public Supplies Supplies;
     public UnitStatus UnitStatus;
