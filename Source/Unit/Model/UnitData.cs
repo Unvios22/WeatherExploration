@@ -1,4 +1,6 @@
-﻿using Godot;
+﻿using System.Collections.Generic;
+using Godot;
+using WeatherExploration.Source.Unit.Logic;
 
 namespace WeatherExploration.Source.Unit.Model;
 
@@ -16,4 +18,9 @@ public partial class UnitData : Resource {
     //todo: change id to be immutable?
     [Export] public Vector2I CurrentGridCell;
     [Export] public Vector3 WorldSpacePos;
+    
+    public Queue<UnitWaypoint> RouteWaypoints;
+    public Supplies Supplies;
+    public UnitStatus UnitStatus;
+    public UnitMoveStance MoveStance;
 }
