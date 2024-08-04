@@ -9,6 +9,8 @@ namespace WeatherExploration.Source.Autoload;
 public partial class PlayerInputProcessor : Node {
     
     private SignalBus _signalBus;
+
+    private bool _isMoveOrderMultiselectModifierPressed;
     
     public override void _EnterTree() {
         var global = GetAutoload.Global();
@@ -19,27 +21,35 @@ public partial class PlayerInputProcessor : Node {
         if (@event.IsAction(InputActions.CURSOR_CLICK)) {
             HandleCursorClick(@event);
         } 
-        else if (@event.IsAction(InputActions.MOVE_ORDER)) {
+        if (@event.IsAction(InputActions.MOVE_ORDER)) {
             HandleMoveOrder(@event);
         }
-        else if (@event.IsAction(InputActions.MOVE_ORDER_MULTISELECT)) {
-            HandleMoveOrderMultiselect(@event);
+
+        if (@event.IsAction(InputActions.MOVE_ORDER_MULTISELECT_MODIFIER)) {
+            HandleMoveOrderMultiselectModifier(@event);
         }
     }
 
     private void HandleCursorClick(InputEvent @event) {
         var inputEventMouseButton = @event as InputEventMouseButton;
         //the event fires twice - for both press and release of the button. Pressed == false if it's the release.
-        if (!inputEventMouseButton.Pressed) {
+        if (inputEventMouseButton.IsPressed()) {
             _signalBus.FireSignal(new InputCursorClickSignal());
         }
     }
 
     private void HandleMoveOrder(InputEvent @event) {
-        
+        if (!@event.IsPressed()) {
+            return;
+        }
+        _signalBus.FireSignal(new InputMoveOrderSignal{IsMultiselect = _isMoveOrderMultiselectModifierPressed});
     }
 
-    private void HandleMoveOrderMultiselect(InputEvent @event) {
-        
+    private void HandleMoveOrderMultiselectModifier(InputEvent @event) {
+        if (@event.IsPressed() && !_isMoveOrderMultiselectModifierPressed) {
+            _isMoveOrderMultiselectModifierPressed = true;
+        } else if (@event.IsReleased()) {
+            _isMoveOrderMultiselectModifierPressed = false;
+        }
     }
 }

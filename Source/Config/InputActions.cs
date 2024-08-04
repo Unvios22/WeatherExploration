@@ -6,5 +6,5 @@ public static class InputActions {
     public const string CAMERA_ZOOM_OUT = "CameraZoomOut";
     public const string CURSOR_CLICK = "CursorClick";
     public const string MOVE_ORDER = "MoveOrder";
-    public const string MOVE_ORDER_MULTISELECT = "MoveOrderMultiselect";
+    public const string MOVE_ORDER_MULTISELECT_MODIFIER = "MoveOrderMultiselectModifier";
 }

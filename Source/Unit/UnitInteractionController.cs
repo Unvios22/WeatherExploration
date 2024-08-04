@@ -31,27 +31,33 @@ public partial class UnitInteractionController : Node, IUnitInteractionControlle
     }
 
     private void RegisterSignalBusCallbacks() {
-        SignalBus.RegisterListener<InputCursorClickSignal>(OnUnitSelectionCheck);
+        SignalBus.RegisterListener<InputCursorClickSignal>(OnUnitSelectionSignal);
+        SignalBus.RegisterListener<InputMoveOrderSignal>(OnUnitMoveOrderSignal);
     }
 
     public void OnUnitHoverStart(Unit unit) {
         _currentlyHoveredUnit = unit;
-        GD.Print("Unit hover");
     }
 
     public void OnUnitHoverStop(Unit unit) {
         _currentlyHoveredUnit = null;
-        GD.Print("Unit hover stop");
     }
 
-    private void OnUnitSelectionCheck(InputCursorClickSignal signal) {
+    private void OnUnitSelectionSignal(InputCursorClickSignal signal) {
         if (_currentlyHoveredUnit is not null) {
             _currentlySelectedUnit = _currentlyHoveredUnit;
-            GD.Print("Unit selected");
         }
         else {
             _currentlySelectedUnit = null;
-            GD.Print("Unit deselected");
+        }
+    }
+
+    private void OnUnitMoveOrderSignal(InputMoveOrderSignal signal) {
+        if (signal.IsMultiselect) {
+            GD.Print("Received move multiselect");
+        }
+        else {
+            GD.Print("Received move");
         }
     }
 }
