@@ -6,7 +6,7 @@ using WeatherExploration.Source.Signals.Types;
 
 namespace WeatherExploration.Source.Autoload;
 
-public partial class PlayerInputProcessor : Node {
+public partial class PlayerInputProcessor : Node3D {
     
     private SignalBus _signalBus;
 
@@ -24,7 +24,6 @@ public partial class PlayerInputProcessor : Node {
         if (@event.IsAction(InputActions.MOVE_ORDER)) {
             HandleMoveOrder(@event);
         }
-
         if (@event.IsAction(InputActions.MOVE_ORDER_MULTISELECT_MODIFIER)) {
             HandleMoveOrderMultiselectModifier(@event);
         }
@@ -42,7 +41,13 @@ public partial class PlayerInputProcessor : Node {
         if (!@event.IsPressed()) {
             return;
         }
-        _signalBus.FireSignal(new InputMoveOrderSignal{IsMultiselect = _isMoveOrderMultiselectModifierPressed});
+        var inputEventMouseButton = @event as InputEventMouseButton;
+        var eventClickScreenSpacePos = inputEventMouseButton.Position;
+        
+        _signalBus.FireSignal(new InputMoveOrderSignal {
+            IsMultiselect = _isMoveOrderMultiselectModifierPressed,
+            ScreenSpaceClickPos = eventClickScreenSpacePos
+        });
     }
 
     private void HandleMoveOrderMultiselectModifier(InputEvent @event) {

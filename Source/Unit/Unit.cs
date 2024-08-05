@@ -16,7 +16,7 @@ public partial class Unit : Node3D {
 
     [Dependency]
     private IUnitInteractionController UnitInteractionController => this.DependOn<IUnitInteractionController>();
-    
+
     private const float WaypointCollisionDistance = 0.02f;
 
     public void OnResolved() {
@@ -53,17 +53,17 @@ public partial class Unit : Node3D {
     }
 
     private bool IsCurrentWaypointWithinCollision() {
-        var nextWaypoint = _unitData.RouteWaypoints.Peek();
+        var nextWaypoint = UnitData.RouteWaypoints.Peek();
         var distanceToWaypoint = GlobalPosition.DistanceTo(nextWaypoint.Position);
         return distanceToWaypoint <= WaypointCollisionDistance;
     }
     
     private void AchieveCurrentWaypoint() {
-        _unitData.RouteWaypoints.Dequeue();
+        UnitData.RouteWaypoints.Dequeue();
     }
 
     private void HandleUnitHasNoWaypoints() {
-        _unitData.UnitStatus = UnitStatus.Idle;
+        UnitData.UnitStatus = UnitStatus.Idle;
     }
     
     private void MoveTowardsCurrentWaypoint() {
@@ -72,4 +72,6 @@ public partial class Unit : Node3D {
     
     //todo: movement logic
     //todo interaction logic
+    
+    public UnitData UnitData => _unitData;
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://c6j2wdr6pkij"]
+[gd_scene load_steps=9 format=3 uid="uid://c6j2wdr6pkij"]
 
 [ext_resource type="Script" path="res://Source/DI/MainGameSceneDIConnector.cs" id="1_3mm0s"]
 [ext_resource type="Script" path="res://Source/Controllers/CameraController.cs" id="1_cmg31"]
@@ -13,6 +13,9 @@
 albedo_color = Color(0.270588, 1, 1, 1)
 albedo_texture = SubResource("ImageTexture_ugi8n")
 
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_peixi"]
+points = PackedVector3Array(0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5)
+
 [node name="SceneDIConnector" type="Node3D"]
 script = ExtResource("1_3mm0s")
 
@@ -24,19 +27,13 @@ transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -
 [node name="CameraController" type="Node" parent="MainScene/Camera3D" node_paths=PackedStringArray("_camera", "_orbitingTarget")]
 script = ExtResource("1_cmg31")
 _camera = NodePath("..")
-_orbitingTarget = NodePath("../../MeshInstance3D")
+_orbitingTarget = NodePath("../../TerrainMapHolder/StaticBody3D/TerrainMapMesh")
 _initialOrbitDistance = 1.0
 _maxOrbitDistance = 5.0
 _minOrbitDistance = 0.3
 _orbitDistanceChangeSpeed = 0.3
 _orbitRotationChangeSpeed = 0.1
 _orbitXRotationAngleLimit = 80.0
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="MainScene"]
-transform = Transform3D(3.1, 0, 0, 0, 0.1, 0, 0, 0, 3.1, 0, 0, 0)
-mesh = SubResource("BoxMesh_4thl1")
-skeleton = NodePath("../..")
-surface_material_override/0 = SubResource("StandardMaterial3D_4ttdh")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="MainScene"]
 transform = Transform3D(0.996308, -0.0858516, 2.43225e-08, 0.0625698, 0.726122, 0.684712, -0.0587837, -0.682184, 0.728813, 0, 0, 0)
@@ -45,3 +42,17 @@ transform = Transform3D(0.996308, -0.0858516, 2.43225e-08, 0.0625698, 0.726122, 
 script = ExtResource("2_l3jbv")
 
 [node name="Unit" parent="MainScene/UnitInteractionController" instance=ExtResource("2_8r8l8")]
+
+[node name="TerrainMapHolder" type="Node3D" parent="MainScene" groups=["MapTerrain"]]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="MainScene/TerrainMapHolder" groups=["MapTerrain"]]
+
+[node name="TerrainMapMesh" type="MeshInstance3D" parent="MainScene/TerrainMapHolder/StaticBody3D" groups=["MapTerrain"]]
+transform = Transform3D(3.1, 0, 0, 0, 0.1, 0, 0, 0, 3.1, 0, 0, 0)
+mesh = SubResource("BoxMesh_4thl1")
+skeleton = NodePath("../../../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_4ttdh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MainScene/TerrainMapHolder/StaticBody3D" groups=["MapTerrain"]]
+transform = Transform3D(3.1, 0, 0, 0, 0.1, 0, 0, 0, 3.1, 0, 0, 0)
+shape = SubResource("ConvexPolygonShape3D_peixi")
