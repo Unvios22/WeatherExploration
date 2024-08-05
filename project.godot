@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 
 Global="*res://Source/Autoload/Global.cs"
 PlayerInputProcessor="*res://Source/Autoload/PlayerInputProcessor.cs"
+RayCasterNode3D="*res://Source/Autoload/RayCasterNode3D.cs"
 
 [debug]
 
