@@ -21,7 +21,6 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
     private Camera3D _playerCamera;
     private const float MoveOrderRaycastDistance = 20f;
     
-    
     private Unit _currentlyHoveredUnit;
     private Unit _currentlySelectedUnit;
 

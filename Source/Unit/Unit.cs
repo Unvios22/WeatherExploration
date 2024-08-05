@@ -1,4 +1,5 @@
-﻿using Chickensoft.AutoInject;
+﻿using System.Collections.Generic;
+using Chickensoft.AutoInject;
 using Chickensoft.Introspection;
 using Godot;
 using WeatherExploration.Source.Unit.Logic;
@@ -13,14 +14,15 @@ public partial class Unit : Node3D {
     [Node("RigidBody3D")] public CollisionObject3D UnitCollisionObject { get; set; }
     
     [Export] private UnitData _unitData;
-
+        
     [Dependency]
     private IUnitInteractionController UnitInteractionController => this.DependOn<IUnitInteractionController>();
 
-    private const float WaypointCollisionDistance = 0.02f;
+    private const float WaypointCollisionDistance = 0.05f;
 
     public void OnResolved() {
         CreateColliderCallbackSignals();
+        InitUnitData();
     }
     
     private void CreateColliderCallbackSignals() {
@@ -32,27 +34,39 @@ public partial class Unit : Node3D {
         //Still, make sure it's safe and will work expectedly
     }
 
+    private void InitUnitData() {
+        _unitData = new UnitData {
+            RouteWaypoints = new Queue<UnitWaypoint>(),
+            UnitMoveSpeed = 0.05f
+        };
+    }
+
     public override void _Process(double delta) {
         ProcessUnitBehavior();
     }
 
     private void ProcessUnitBehavior() {
-        //
-        // if (IsCurrentWaypointWithinCollision()) {
-        //     AchieveCurrentWaypoint();
-        // }
-        //
-        // if (_unitData.UnitStatus == UnitStatus.Idle) {
-        //     return;
-        // }
-        //
-        // if (_unitData.RouteWaypoints.Count == 0) {
-        //     HandleUnitHasNoWaypoints();
-        // }
 
+        if (_unitData.RouteWaypoints.Count == 0) {
+            return;
+        }
+        
+        MoveUnitTowardsWaypoint();
+        
+        if (IsCurrentWaypointWithinAchieveRange()) {
+            AchieveCurrentWaypoint();
+        }
     }
 
-    private bool IsCurrentWaypointWithinCollision() {
+    private void MoveUnitTowardsWaypoint() {
+        var targetPos = UnitData.RouteWaypoints.Peek().Position;
+        var towardsTargetVector = (targetPos - Position).Normalized();
+        var movementVector = towardsTargetVector * UnitData.UnitMoveSpeed;
+        
+        Translate(movementVector);
+    }
+
+    private bool IsCurrentWaypointWithinAchieveRange() {
         var nextWaypoint = UnitData.RouteWaypoints.Peek();
         var distanceToWaypoint = GlobalPosition.DistanceTo(nextWaypoint.Position);
         return distanceToWaypoint <= WaypointCollisionDistance;
@@ -61,17 +75,6 @@ public partial class Unit : Node3D {
     private void AchieveCurrentWaypoint() {
         UnitData.RouteWaypoints.Dequeue();
     }
-
-    private void HandleUnitHasNoWaypoints() {
-        UnitData.UnitStatus = UnitStatus.Idle;
-    }
-    
-    private void MoveTowardsCurrentWaypoint() {
-        
-    }
-    
-    //todo: movement logic
-    //todo interaction logic
     
     public UnitData UnitData => _unitData;
 }
