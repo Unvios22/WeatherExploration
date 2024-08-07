@@ -1,4 +1,5 @@
-﻿using Chickensoft.AutoInject;
+﻿using System.Linq;
+using Chickensoft.AutoInject;
 using Chickensoft.Introspection;
 using Godot;
 using WeatherExploration.Source.Config;
@@ -19,6 +20,7 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
     IUnitInteractionController IProvide<IUnitInteractionController>.Value() => this;
 
     private Camera3D _playerCamera;
+    [Export] private UnitRouteMeshController _unitRouteMeshController;
     private const float MoveOrderRaycastDistance = 20f;
     
     private Unit _currentlyHoveredUnit;
@@ -49,8 +51,10 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
     private void OnUnitSelectionSignal(InputCursorClickSignal signal) {
         if (_currentlyHoveredUnit is not null) {
             _currentlySelectedUnit = _currentlyHoveredUnit;
+            DisplayUnitWaypointMesh(_currentlySelectedUnit);
         }
         else {
+            _unitRouteMeshController.ClearMeshVertices();
             _currentlySelectedUnit = null;
         }
     }
@@ -72,6 +76,8 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
         else {
             HandleMoveOrderSingle(moveOrderPos);
         }
+
+        DisplayUnitWaypointMesh(_currentlySelectedUnit);
     }
 
     private bool RaycastForMapObjectCollision(Vector2 screenSpaceClickPos, out Vector3 moveOrderPos) {
@@ -105,5 +111,11 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
         
         var newWaypoint = new UnitWaypoint(movePos);
         currentlySelectedUnitWaypoints.Enqueue(newWaypoint);
+    }
+
+    private void DisplayUnitWaypointMesh(Unit unit) {
+        var unitWaypointVertices = unit.UnitData.RouteWaypoints.Select(x => x.Position).ToList();
+        unitWaypointVertices.Insert(0, unit.Position);
+        _unitRouteMeshController.SetMeshVertices(unitWaypointVertices);
     }
 }

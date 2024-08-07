@@ -18,7 +18,7 @@ public partial class Unit : Node3D {
     [Dependency]
     private IUnitInteractionController UnitInteractionController => this.DependOn<IUnitInteractionController>();
 
-    private const float WaypointCollisionDistance = 0.05f;
+    private const float WaypointAchieveDistance = 0.05f;
 
     public void OnResolved() {
         CreateColliderCallbackSignals();
@@ -37,7 +37,7 @@ public partial class Unit : Node3D {
     private void InitUnitData() {
         _unitData = new UnitData {
             RouteWaypoints = new Queue<UnitWaypoint>(),
-            UnitMoveSpeed = 0.05f
+            UnitMoveSpeed = 0.03f
         };
     }
 
@@ -46,7 +46,6 @@ public partial class Unit : Node3D {
     }
 
     private void ProcessUnitBehavior() {
-
         if (_unitData.RouteWaypoints.Count == 0) {
             return;
         }
@@ -69,7 +68,7 @@ public partial class Unit : Node3D {
     private bool IsCurrentWaypointWithinAchieveRange() {
         var nextWaypoint = UnitData.RouteWaypoints.Peek();
         var distanceToWaypoint = GlobalPosition.DistanceTo(nextWaypoint.Position);
-        return distanceToWaypoint <= WaypointCollisionDistance;
+        return distanceToWaypoint <= WaypointAchieveDistance;
     }
     
     private void AchieveCurrentWaypoint() {

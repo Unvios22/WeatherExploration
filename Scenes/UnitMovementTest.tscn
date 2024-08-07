@@ -1,9 +1,16 @@
-[gd_scene load_steps=9 format=3 uid="uid://c6j2wdr6pkij"]
+[gd_scene load_steps=12 format=3 uid="uid://c6j2wdr6pkij"]
 
 [ext_resource type="Script" path="res://Source/DI/MainGameSceneDIConnector.cs" id="1_3mm0s"]
 [ext_resource type="Script" path="res://Source/Controllers/CameraController.cs" id="1_cmg31"]
 [ext_resource type="PackedScene" uid="uid://bbsrapv1n351i" path="res://Prefabs/unit.tscn" id="2_8r8l8"]
 [ext_resource type="Script" path="res://Source/Unit/UnitInteractionController.cs" id="2_l3jbv"]
+[ext_resource type="Script" path="res://Source/Unit/UnitRouteMeshController.cs" id="4_p87x3"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3u03v"]
+no_depth_test = true
+vertex_color_use_as_albedo = true
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_cqdjp"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_4thl1"]
 
@@ -38,21 +45,34 @@ _orbitXRotationAngleLimit = 80.0
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="MainScene"]
 transform = Transform3D(0.996308, -0.0858516, 2.43225e-08, 0.0625698, 0.726122, 0.684712, -0.0587837, -0.682184, 0.728813, 0, 0, 0)
 
-[node name="UnitInteractionController" type="Node3D" parent="MainScene"]
+[node name="UnitInteractionController" type="Node3D" parent="MainScene" node_paths=PackedStringArray("_unitRouteMeshController")]
 script = ExtResource("2_l3jbv")
+_unitRouteMeshController = NodePath("RouteDisplayMeshesHolder/RouteDisplayMesh")
 
-[node name="Unit" parent="MainScene/UnitInteractionController" instance=ExtResource("2_8r8l8")]
+[node name="RouteDisplayMeshesHolder" type="Node3D" parent="MainScene/UnitInteractionController"]
+
+[node name="RouteDisplayMesh" type="Node3D" parent="MainScene/UnitInteractionController/RouteDisplayMeshesHolder" node_paths=PackedStringArray("_mesh")]
+script = ExtResource("4_p87x3")
+_mesh = NodePath("MeshInstance3D")
+_meshColor = Color(0.886275, 0.6, 0.168627, 1)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MainScene/UnitInteractionController/RouteDisplayMeshesHolder/RouteDisplayMesh"]
+material_override = SubResource("StandardMaterial3D_3u03v")
+mesh = SubResource("ImmediateMesh_cqdjp")
+
+[node name="UnitsHolder" type="Node3D" parent="MainScene/UnitInteractionController"]
+
+[node name="Unit" parent="MainScene/UnitInteractionController/UnitsHolder" instance=ExtResource("2_8r8l8")]
 
 [node name="TerrainMapHolder" type="Node3D" parent="MainScene" groups=["MapTerrain"]]
+transform = Transform3D(10, 0, 0, 0, 1, 0, 0, 0, 10, 0, -0.710521, 0)
 
 [node name="StaticBody3D" type="StaticBody3D" parent="MainScene/TerrainMapHolder" groups=["MapTerrain"]]
 
 [node name="TerrainMapMesh" type="MeshInstance3D" parent="MainScene/TerrainMapHolder/StaticBody3D" groups=["MapTerrain"]]
-transform = Transform3D(3.1, 0, 0, 0, 0.1, 0, 0, 0, 3.1, 0, 0, 0)
 mesh = SubResource("BoxMesh_4thl1")
 skeleton = NodePath("../../../..")
 surface_material_override/0 = SubResource("StandardMaterial3D_4ttdh")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="MainScene/TerrainMapHolder/StaticBody3D" groups=["MapTerrain"]]
-transform = Transform3D(3.1, 0, 0, 0, 0.1, 0, 0, 0, 3.1, 0, 0, 0)
 shape = SubResource("ConvexPolygonShape3D_peixi")
