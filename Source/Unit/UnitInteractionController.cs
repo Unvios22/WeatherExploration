@@ -20,7 +20,7 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
     IUnitInteractionController IProvide<IUnitInteractionController>.Value() => this;
 
     private Camera3D _playerCamera;
-    [Export] private UnitRouteMeshController _unitRouteMeshController;
+    [Export] private UnitRouteMarkersDisplay _unitRouteMarkersDisplay;
     private const float MoveOrderRaycastDistance = 20f;
     
     private Unit _currentlyHoveredUnit;
@@ -54,7 +54,7 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
             DisplayUnitWaypointMesh(_currentlySelectedUnit);
         }
         else {
-            _unitRouteMeshController.ClearMeshVertices();
+            _unitRouteMarkersDisplay.ClearDisplayedMarkers();
             _currentlySelectedUnit = null;
         }
     }
@@ -116,6 +116,6 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
     private void DisplayUnitWaypointMesh(Unit unit) {
         var unitWaypointVertices = unit.UnitData.RouteWaypoints.Select(x => x.Position).ToList();
         unitWaypointVertices.Insert(0, unit.Position);
-        _unitRouteMeshController.SetMeshVertices(unitWaypointVertices);
+        _unitRouteMarkersDisplay.RenderUnitWaypointPath(unitWaypointVertices);
     }
 }
