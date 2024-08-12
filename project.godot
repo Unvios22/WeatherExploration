@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="WeatherExploration"
-run/main_scene="res://Scenes/UnitMovementTest.tscn"
+run/main_scene="res://Scenes/WeatherSimulationTest.tscn"
 config/features=PackedStringArray("4.2", "C#", "Forward Plus")
 boot_splash/image="res://Logo/rainbow-dark-d.png"
 config/icon="res://icon.svg"

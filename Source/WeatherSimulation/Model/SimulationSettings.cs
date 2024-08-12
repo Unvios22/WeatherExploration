@@ -1,5 +1,9 @@
-﻿namespace WeatherExploration.Source.WeatherSimulation.Model;
+﻿using Godot;
 
-public struct SimulationSettings {
-    public int TextureResolution;
+namespace WeatherExploration.Source.WeatherSimulation.Model;
+
+[GlobalClass]
+public partial class SimulationSettings : Resource {
+    [Export] public int TextureResolution;
+    [Export] public int IterationsPerStep;
 }

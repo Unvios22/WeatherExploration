@@ -24,13 +24,13 @@ public partial class GameController : Node {
     private void InitializeWeatherSim() {
         var simulationSettings = new SimulationSettings();
         simulationSettings.TextureResolution = SimResolution;
-        _weatherController.Initialize(simulationSettings);
+        // _weatherController.Initialize(simulationSettings);
     }
     
     public override void _Process(double delta) {
         GD.Print("GameController Tick");
-        var sampledTexture = _weatherController.SampleTexture();
-        SetDebugPlaneTexture(sampledTexture);
+        // var sampledTexture = _weatherController.SampleTexture();
+        // SetDebugPlaneTexture(sampledTexture);
     }
 
     private void SetDebugPlaneTexture(Texture2D texture2D) {

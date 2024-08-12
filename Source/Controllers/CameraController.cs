@@ -107,7 +107,6 @@ public partial class CameraController : Node {
             _mousePosLastFrame = _mousePosThisFrame;
             _mousePosThisFrame = eventMouseMotion.Position;
             _mouseDeltaThisFrame = _mousePosThisFrame - _mousePosLastFrame;
-            GD.Print(_mouseDeltaThisFrame);
         }
         
         if (@event.IsAction(InputActions.CAMERA_DRAG)) {

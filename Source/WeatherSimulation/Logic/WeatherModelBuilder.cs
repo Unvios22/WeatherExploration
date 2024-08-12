@@ -17,16 +17,16 @@ public class WeatherModelBuilder {
         _modelResolution = simResolution;
     }
     
-    public void InitializeTextures() {
-        _model.GroundModel.TemperatureTex = CreateTexture();
-        _model.GroundModel.HeightTex = CreateTexture();
-        _model.GroundModel.MoistureTex = CreateTexture();
-        _model.GroundModel.SlopeTex = CreateTexture();
-
-        _model.AtmosphereModel.TemperatureTex = CreateTexture();
-        _model.AtmosphereModel.MoistureTex = CreateTexture();
-        _model.AtmosphereModel.PressureTex = CreateTexture();
-    }
+    // public void InitializeTextures() {
+    //     _model.GroundModel.TemperatureTex = CreateTexture();
+    //     _model.GroundModel.HeightTex = CreateTexture();
+    //     _model.GroundModel.MoistureTex = CreateTexture();
+    //     _model.GroundModel.SlopeTex = CreateTexture();
+    //
+    //     _model.AtmosphereModel.TemperatureTex = CreateTexture();
+    //     _model.AtmosphereModel.MoistureTex = CreateTexture();
+    //     _model.AtmosphereModel.PressureTex = CreateTexture();
+    // }
 
     public WeatherModel Build() {
         var result = _model;

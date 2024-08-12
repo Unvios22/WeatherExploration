@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3 uid="uid://cvurgms4b77kw"]
+
+[ext_resource type="Script" path="res://Source/WeatherSimulation/Logic/WeatherController.cs" id="1_b7nc1"]
+[ext_resource type="Script" path="res://Source/WeatherSimulation/Model/SimulationSettings.cs" id="2_ottab"]
+
+[sub_resource type="Resource" id="Resource_bpnf5"]
+script = ExtResource("2_ottab")
+TextureResolution = 254
+IterationsPerStep = 2
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_nxw4s"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cub54"]
+specular_mode = 2
+texture_filter = 0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b1rej"]
+diffuse_mode = 3
+specular_mode = 2
+disable_fog = true
+emission_enabled = true
+emission = Color(0.0575699, 5.69146e-06, 0.295099, 1)
+backlight = Color(0.830335, 0.830335, 0.830335, 1)
+texture_filter = 0
+disable_receive_shadows = true
+
+[node name="WeatherSimulationTest" type="Node3D"]
+
+[node name="WeatherModelController" type="Node3D" parent="." node_paths=PackedStringArray("_displayPlaneMesh")]
+script = ExtResource("1_b7nc1")
+_displayPlaneMesh = NodePath("MeshInstance3D")
+_simulationSettings = SubResource("Resource_bpnf5")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WeatherModelController"]
+mesh = SubResource("PlaneMesh_nxw4s")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_cub54")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 1.41082, 0)
+
+[node name="BackgroundPlane" type="MeshInstance3D" parent="."]
+transform = Transform3D(3.50558, 0, 0, 0, 1, 0, 0, 0, 3.50558, 0, -1.15902, 0)
+mesh = SubResource("PlaneMesh_nxw4s")
+surface_material_override/0 = SubResource("StandardMaterial3D_b1rej")

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Godot;
 using WeatherExploration.Source.Exceptions;
 
 namespace WeatherExploration.Source.Signals;
@@ -38,7 +39,8 @@ public class AbstractSignalBus<TBaseSignal> {
 
         public static void FireSignal(TSignal signal) {
             if (SignalListeners.Count == 0) {
-                throw new NoSignalListenersException(typeof(TSignal));
+                //TODO: refactor into log-warn of some type
+                GD.Print("SignalBus received sent signal of type for which there are no registered listeners: " + typeof(TSignal));
             }
             foreach (var listener in SignalListeners) {
                 listener.Invoke(signal);
