@@ -12,7 +12,7 @@ config_version=5
 
 config/name="WeatherExploration"
 run/main_scene="res://Scenes/WeatherSimulationTest.tscn"
-config/features=PackedStringArray("4.2", "C#", "Forward Plus")
+config/features=PackedStringArray("4.3", "C#", "Forward Plus")
 boot_splash/image="res://Logo/rainbow-dark-d.png"
 config/icon="res://icon.svg"
 
@@ -25,6 +25,10 @@ RayCasterNode3D="*res://Source/Autoload/RayCasterNode3D.cs"
 [debug]
 
 settings/stdout/print_fps=true
+
+[display]
+
+window/size/always_on_top=true
 
 [dotnet]
 
@@ -54,7 +58,7 @@ CursorClick={
 }
 MoveOrderMultiselectModifier={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194325,"physical_keycode":4194325,"key_label":4194325,"unicode":0,"echo":false,"script":null)
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194325,"physical_keycode":4194325,"key_label":4194325,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
 MoveOrder={
