@@ -3,10 +3,10 @@
 namespace WeatherExploration.Source.WeatherSimulation.Model;
 
 public struct WeatherModel {
-    public int TextureResolution;
+    public uint TextureResolution;
     public AtmosphereModel AtmosphereModel;
 
-    public WeatherModel(int textureResolution) {
+    public WeatherModel(uint textureResolution) {
         TextureResolution = textureResolution;
         AtmosphereModel = new AtmosphereModel();
     }

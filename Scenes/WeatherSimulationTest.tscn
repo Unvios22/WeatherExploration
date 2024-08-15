@@ -5,8 +5,8 @@
 
 [sub_resource type="Resource" id="Resource_bpnf5"]
 script = ExtResource("2_ottab")
-TextureResolution = 254
-IterationsPerStep = 2
+TextureResolution = 512
+IterationsPerStep = 20
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_nxw4s"]
 

@@ -5,7 +5,7 @@ namespace WeatherExploration.WeatherSimulation.Model;
 public struct AtmosphereModel {
     public float[,] TemperatureTex;
     public float[,] MoistureTex;
-    public float[,] PressureTex;
+    public Vector3[,] PressureTex;
     
     //optional/might happen to be emergent
 //     public Texture2D PrecipitationTex;

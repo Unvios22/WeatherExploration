@@ -12,10 +12,10 @@ public class WeatherModelBuilder {
         _modelResolution = 0;
     }
 
-    public void SetSimResolution(int simResolution) {
-        _model.TextureResolution = simResolution;
-        _modelResolution = simResolution;
-    }
+    // public void SetSimResolution(int simResolution) {
+    //     _model.TextureResolution = simResolution;
+    //     _modelResolution = simResolution;
+    // }
     
     // public void InitializeTextures() {
     //     _model.GroundModel.TemperatureTex = CreateTexture();

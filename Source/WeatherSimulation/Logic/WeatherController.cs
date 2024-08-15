@@ -9,8 +9,6 @@ public partial class WeatherController : Node3D {
 
     [Export] private MeshInstance3D _displayPlaneMesh;
     [Export] private SimulationSettings _simulationSettings;
-    
-    private WeatherModel _weatherModel;
 
     private const double SimTimeStep = 0.2f;
     private double _stepTimer;
@@ -18,7 +16,9 @@ public partial class WeatherController : Node3D {
     private FastNoiseLite _noiseGenerator;
     private RandomNumberGenerator _randomNumberGenerator;
 
-    private WeatherSimulator _weatherSimulator;
+    private Image _temperatureTexture;
+
+    private ShaderHandler _simulationShaderHandler;
 
     public override void _Ready() {
         Initialize();
@@ -30,48 +30,88 @@ public partial class WeatherController : Node3D {
         SetupSimulation();
     }
 
-    // private void InitializeSimModel() {
-    //     var modelBuilder = new WeatherModelBuilder();
-    //     modelBuilder.SetSimResolution(_simulationSettings.TextureResolution);
-    //     modelBuilder.InitializeTextures();
-    //     _weatherModel = modelBuilder.Build();
-    // }
-
     private void SetupNoiseGenerator() {
         _noiseGenerator = new FastNoiseLite();
-        _noiseGenerator.NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin;
+        _noiseGenerator.NoiseType = FastNoiseLite.NoiseTypeEnum.ValueCubic;
         
         _randomNumberGenerator = new RandomNumberGenerator();
         _randomNumberGenerator.Randomize();
     }
 
-    // public Texture2D SampleTexture() {
-    //     return _weatherModel.AtmosphereModel.TemperatureTex;
+    private void SetupSimulation() {
+        _temperatureTexture = CreateTemperatureTexture();
+        _simulationShaderHandler = new ShaderHandler(_simulationSettings);
+    }
+
+    private Image CreateTemperatureTexture() {
+        _noiseGenerator.Seed = _randomNumberGenerator.RandiRange(-100, 100);
+        var noiseImage = _noiseGenerator.GetImage((int)_simulationSettings.TextureResolution, (int)_simulationSettings.TextureResolution);
+        noiseImage.Convert(Image.Format.R8);
+        
+        return noiseImage;
+    }
+
+
+    public override void _Process(double delta) {
+        // if (_stepTimer >= SimTimeStep) {
+        //     Step();
+        //     _stepTimer = 0f;
+        // }
+        // _stepTimer += delta;
+        Step();
+    }
+
+    private void Step() {
+        //currently operating on pressure texture only
+        
+        GD.Print("Step Simulation");
+        var newTemperatureTex = _simulationShaderHandler.Step(_temperatureTexture);
+        
+        GD.Print("Assign result image to plane texture");
+        AssignImageToPlane(newTemperatureTex);
+        
+        // var totalTemp = 0f;
+        // foreach (var value in newTemperatureTex) {
+        //     totalTemp += value;
+        // }
+        // GD.Print("Total temp: " + totalTemp);
+    }
+
+    // private void DisplayFloatTexAsImage(float[,] floatArray) {
+    //     var array1D = Parse2DArrayTo1DArray(floatArray);
+    //     var byteStream = ConvertFloatArrayToByteStream(array1D);
+    //
+    //     var image = Image.CreateFromData((int)_simulationSettings.TextureResolution, (int)_simulationSettings.TextureResolution,
+    //         false, Image.Format.Rf, byteStream);
+    //
+    //     var imageTex = ImageTexture.CreateFromImage(image);
+    //     
+    //     AssignImageToPlane(imageTex);
     // }
 
-    private void SetupSimulation() {
-        var atmosphereModel = new AtmosphereModel();
-        var pressureTexture = CreatePressureTexture();
-        atmosphereModel.PressureTex = pressureTexture;
-        
-        var weatherModel = new WeatherModel();
-        weatherModel.TextureResolution = _simulationSettings.TextureResolution;
-        weatherModel.AtmosphereModel = atmosphereModel;
-        
-        _weatherSimulator = new WeatherSimulator(weatherModel, _simulationSettings);
+    private float[] ConvertByteStreamToFloatArray(byte[] stream) {
+        var convertedFloatArray = new float[stream.Length / sizeof(float)];
+        for (var i = 0; i < convertedFloatArray.Length; i++) {
+            convertedFloatArray[i] = BitConverter.ToSingle(stream, i * sizeof(float));
+        }
+
+        return convertedFloatArray;
     }
 
-    private float[,] CreatePressureTexture() {
-        _noiseGenerator.Seed = _randomNumberGenerator.RandiRange(-100, 100);
-        var noiseImage = _noiseGenerator.GetImage(_simulationSettings.TextureResolution, _simulationSettings.TextureResolution);
-        noiseImage.Convert(Image.Format.Rf);
-        
-        var imageDataByteStream = noiseImage.GetData();
-        var floatArray1D = ConvertByteStreamToFloatArray(imageDataByteStream);
-        var floatArray2D = Parse1Dto2DArray(floatArray1D);
-        return floatArray2D;
-    }
+    private byte[] ConvertFloatArrayToByteStream(float[] floatArray) {
+        var byteStream = new byte[floatArray.Length * sizeof(float)];
+        for (var i = 0; i < floatArray.Length; i++) {
+            BitConverter.GetBytes(floatArray[i]).CopyTo(byteStream, i * sizeof(float));
+        }
 
+        return byteStream;
+    }
+    
+    private void AssignImageToPlane(Image image) {
+        var texture2D = ImageTexture.CreateFromImage(image);
+        _displayPlaneMesh.GetSurfaceOverrideMaterial(0).Set("albedo_texture", texture2D);
+    }
+    
     private float[,] Parse1Dto2DArray(float[] array1D) {
         var textureRes = _simulationSettings.TextureResolution;
         var array2D = new float[textureRes,textureRes];
@@ -102,68 +142,5 @@ public partial class WeatherController : Node3D {
         }
 
         return array1D;
-    }
-
-    public override void _Process(double delta) {
-        // if (_stepTimer >= SimTimeStep) {
-        //     Step();
-        //     _stepTimer = 0f;
-        // }
-        // _stepTimer += delta;
-        Step();
-    }
-
-    private void Step() {
-        //currently operating on pressure texture only
-
-        var stepResult = _weatherSimulator.Step();
-        var newPressureTex = stepResult.AtmosphereModel.PressureTex;
-        
-        DisplayFloatTexAsImage(newPressureTex);
-        GD.Print("Step Simulation");
-
-        var totalPressure = 0f;
-        foreach (var value in newPressureTex) {
-            totalPressure += value;
-        }
-        GD.Print("Total pressure: " + totalPressure);
-    }
-
-    private void DisplayFloatTexAsImage(float[,] floatArray) {
-        var array1D = Parse2DArrayTo1DArray(floatArray);
-        var byteStream = ConvertFloatArrayToByteStream(array1D);
-
-        var image = Image.CreateFromData(_simulationSettings.TextureResolution, _simulationSettings.TextureResolution,
-            false, Image.Format.Rf, byteStream);
-
-        var imageTex = ImageTexture.CreateFromImage(image);
-        
-        AssignTextureToPlane(imageTex);
-    }
-
-    private float[] ConvertByteStreamToFloatArray(byte[] stream) {
-        var convertedFloatArray = new float[stream.Length / sizeof(float)];
-        for (var i = 0; i < convertedFloatArray.Length; i++) {
-            convertedFloatArray[i] = BitConverter.ToSingle(stream, i * sizeof(float));
-        }
-
-        return convertedFloatArray;
-    }
-
-    private byte[] ConvertFloatArrayToByteStream(float[] floatArray) {
-        var byteStream = new byte[floatArray.Length * sizeof(float)];
-        for (var i = 0; i < floatArray.Length; i++) {
-            BitConverter.GetBytes(floatArray[i]).CopyTo(byteStream, i * sizeof(float));
-        }
-
-        return byteStream;
-    }
-    
-    public void AssignTextureToPlane(Texture2D tex) {
-        _displayPlaneMesh.GetSurfaceOverrideMaterial(0).Set("albedo_texture", tex);
-    }
-    
-    public WeatherModel GetCurrentState() {
-        return _weatherModel;
     }
 }
