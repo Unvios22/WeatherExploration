@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Chickensoft.AutoInject;
 using Chickensoft.Introspection;
 using Godot;
@@ -30,6 +31,17 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
         _playerCamera = GetViewport().GetCamera3D();
     }
 
+    public override void _Process(double delta) {
+        UpdateUnitMarkersDisplay();
+    }
+
+    private void UpdateUnitMarkersDisplay() {
+        _unitRouteMarkersDisplay.ClearDisplayedMarkers();
+        if (_currentlySelectedUnit is not null) {
+            DisplayUnitWaypointMesh(_currentlySelectedUnit);
+        }
+    }
+
     public void OnResolved() {
         RegisterSignalBusCallbacks();
         this.Provide();
@@ -51,10 +63,8 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
     private void OnUnitSelectionSignal(InputCursorClickSignal signal) {
         if (_currentlyHoveredUnit is not null) {
             _currentlySelectedUnit = _currentlyHoveredUnit;
-            DisplayUnitWaypointMesh(_currentlySelectedUnit);
         }
         else {
-            _unitRouteMarkersDisplay.ClearDisplayedMarkers();
             _currentlySelectedUnit = null;
         }
     }
@@ -76,8 +86,6 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
         else {
             HandleMoveOrderSingle(moveOrderPos);
         }
-
-        DisplayUnitWaypointMesh(_currentlySelectedUnit);
     }
 
     private bool RaycastForMapObjectCollision(Vector2 screenSpaceClickPos, out Vector3 moveOrderPos) {

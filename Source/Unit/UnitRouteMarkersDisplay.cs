@@ -67,7 +67,6 @@ public partial class UnitRouteMarkersDisplay : Node3D {
         if (vertices.Count < 2) {
             return;
         }
-        ClearDisplayedMarkers();
         SpawnRouteMarkers(vertices);
     }
     
