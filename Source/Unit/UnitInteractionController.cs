@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using Chickensoft.AutoInject;
 using Chickensoft.Introspection;
 using Godot;
@@ -48,7 +47,7 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
     }
 
     private void RegisterSignalBusCallbacks() {
-        SignalBus.RegisterListener<InputCursorClickSignal>(OnUnitSelectionSignal);
+        SignalBus.RegisterListener<InputCursorClickSignal>(OnCheckForUnitSelectionHitSignal);
         SignalBus.RegisterListener<InputMoveOrderSignal>(OnUnitMoveOrderSignal);
     }
 
@@ -60,11 +59,14 @@ public partial class UnitInteractionController : Node3D, IUnitInteractionControl
         _currentlyHoveredUnit = null;
     }
 
-    private void OnUnitSelectionSignal(InputCursorClickSignal signal) {
+    private void OnCheckForUnitSelectionHitSignal(InputCursorClickSignal signal) {
         if (_currentlyHoveredUnit is not null) {
             _currentlySelectedUnit = _currentlyHoveredUnit;
+            SignalBus.FireSignal(new UnitSelectedSignal{SelectedUnit = _currentlySelectedUnit});
+            _currentlySelectedUnit.SetUnitSelectedStatus(true);
         }
         else {
+            _currentlySelectedUnit.SetUnitSelectedStatus(false);
             _currentlySelectedUnit = null;
         }
     }

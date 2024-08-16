@@ -2,6 +2,7 @@
 using Chickensoft.AutoInject;
 using Chickensoft.Introspection;
 using Godot;
+using WeatherExploration.Source.Signals;
 using WeatherExploration.Source.Unit.Logic;
 using WeatherExploration.Source.Unit.Model;
 
@@ -12,17 +13,22 @@ public partial class Unit : Node3D {
     public override void _Notification(int what) => this.Notify(what);
     
     [Node("RigidBody3D")] public CollisionObject3D UnitCollisionObject { get; set; }
+    [Node("Sprite3D")] public Sprite3D UnitSprite { get; set; }
     
     [Export] private UnitData _unitData;
+
+    private Vector3 _defaultLocalUnitSpritePos;
         
-    [Dependency]
-    private IUnitInteractionController UnitInteractionController => this.DependOn<IUnitInteractionController>();
+    [Dependency] private IUnitInteractionController UnitInteractionController => this.DependOn<IUnitInteractionController>();
 
     private const float WaypointAchieveDistance = 0.05f;
+    private readonly Vector3 UnitSpriteSelectedPositionChange = new Vector3(0f, 0.5f, 0f);
+    private bool _isCurrentlySelected;
 
     public void OnResolved() {
         CreateColliderCallbackSignals();
         InitUnitData();
+        _defaultLocalUnitSpritePos = UnitSprite.Position;
     }
     
     private void CreateColliderCallbackSignals() {
@@ -39,6 +45,20 @@ public partial class Unit : Node3D {
             RouteWaypoints = new Queue<UnitWaypoint>(),
             UnitMoveSpeed = 0.03f
         };
+    }
+
+    public void SetUnitSelectedStatus(bool isSelected) {
+        _isCurrentlySelected = isSelected;
+        UpdateUnitSpriteDisplayToSelectedStatus(isSelected);
+    }
+
+    private void UpdateUnitSpriteDisplayToSelectedStatus(bool isSelected) {
+        if (isSelected) {
+            UnitSprite.Position = _defaultLocalUnitSpritePos + UnitSpriteSelectedPositionChange;
+        }
+        else {
+            UnitSprite.Position = _defaultLocalUnitSpritePos;;
+        }
     }
 
     public override void _Process(double delta) {
