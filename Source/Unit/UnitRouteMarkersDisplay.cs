@@ -14,17 +14,16 @@ public partial class UnitRouteMarkersDisplay : Node3D {
 
     private const float MinorMarkerRadius = 0.2f;
     private const float WaypointMarkerRadius = 0.4f;
-
-    private List<Node> _spawnedMarkersHolder;
-        
-    //PPU - both the config, the calculations, and the instantiation/destroying can be optimized
-    //some object pool may be better than creating/destroying objects constantly
-    //also - make sure the created worldspace meshes are properly considered multiple instances of same mesh in terms of memory and GPU usage
+    
+    private MultiMesh _minorMarkerMultimesh;
+    private MultiMesh _waypointMarkerMultimesh;
+    
     public override void _Ready() {
         PrepareMarkerMeshTemplate();
-        _spawnedMarkersHolder = new List<Node>();
+        PrepareMultimeshes();
+        InstantiateMultimeshInstanceNodes();
     }
-
+    
     private void PrepareMarkerMeshTemplate() {
         _minorMarkerMeshTemplate = new SphereMesh();
         _minorMarkerMeshTemplate.RadialSegments = 8;
@@ -41,20 +40,48 @@ public partial class UnitRouteMarkersDisplay : Node3D {
         //TODO: duplicate code; refactor
         //TODO: add also custom material (prob unshaded one)
     }
+    
+    private void PrepareMultimeshes() {
+        _minorMarkerMultimesh = new MultiMesh();
+        _minorMarkerMultimesh.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
+        _minorMarkerMultimesh.SetMesh(_minorMarkerMeshTemplate);
+        
+        _waypointMarkerMultimesh = new MultiMesh();
+        _waypointMarkerMultimesh.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
+        _waypointMarkerMultimesh.SetMesh(_waypointMarkerMeshTemplate);
+    }
 
-    //renders mesh line connecting the input worldspace points
+    private void InstantiateMultimeshInstanceNodes() {
+        var waypointMarkerMultimeshInstance = new MultiMeshInstance3D();
+        waypointMarkerMultimeshInstance.Multimesh = _waypointMarkerMultimesh;
+        RouteMarkersHolder.AddChild(waypointMarkerMultimeshInstance);
+        
+        var minorMarkerMultimeshInstance = new MultiMeshInstance3D();
+        minorMarkerMultimeshInstance.Multimesh = _minorMarkerMultimesh;
+        RouteMarkersHolder.AddChild(minorMarkerMultimeshInstance);
+    }
+
+    //renders line of mesh markers connecting the input worldspace points
     //first waypoint vertex is considered to be actually the unit's position
     public void RenderUnitWaypointPath(List<Vector3> vertices) {
         if (vertices.Count < 2) {
             return;
         }
-        
         ClearDisplayedMarkers();
         SpawnRouteMarkers(vertices);
     }
-
+    
     private void SpawnRouteMarkers(List<Vector3> waypointVertices) {
         var markerDistanceStep = 1 / MarkersPerWorldSpaceUnitRatio;
+        
+        _waypointMarkerMultimesh.InstanceCount = waypointVertices.Count - 1;
+        
+        var waypointMarkerIndex = 0;
+        var minorMarkerCount = 0;
+        //PPU: using a cached list here is necessary because the amount of minor markers to spawn is known only after the loop
+        //and only then can it be set as instanceCount in the multimesh (assigning instanceCount multiple times inside 
+        //the loop clears the previously created instances)
+        var minorMarkersToSpawn = new List<Vector3>();
         
         //iterating from last waypoint to make sure the markers are stable in worldspace and the "moving" end of the line
         //is on the unit's end
@@ -62,39 +89,44 @@ public partial class UnitRouteMarkersDisplay : Node3D {
             //note the loop will stop after second to last element - considered to be the unit's actual position
             var currentPos = waypointVertices[i]; 
             
-            SpawnWaypointMarker(currentPos);
+            SpawnWaypointMarker(waypointMarkerIndex, currentPos);
+            waypointMarkerIndex++;
             
             var distanceToPreviousWaypoint = currentPos.DistanceTo(waypointVertices[i - 1]);
             var vectorTowardsPreviousWaypoint = (waypointVertices[i-1] - currentPos).Normalized();
-            var markersToSpawn = Mathf.FloorToInt(MarkersPerWorldSpaceUnitRatio * distanceToPreviousWaypoint);
+            var markersToSpawnForThisWaypoint = Mathf.FloorToInt(MarkersPerWorldSpaceUnitRatio * distanceToPreviousWaypoint);
             
-            for (var j = markersToSpawn; j > 0; j--) {
+            minorMarkerCount += markersToSpawnForThisWaypoint;
+            
+            //prepare a list of worldspace positons for minor markers to spawn at
+            for (var j = markersToSpawnForThisWaypoint; j > 0; j--) {
                 currentPos += vectorTowardsPreviousWaypoint * markerDistanceStep;
-                SpawnMinorMarker(currentPos);
+                minorMarkersToSpawn.Add(currentPos);
             }
+        }
+        
+        _minorMarkerMultimesh.InstanceCount = minorMarkerCount;
+        
+        //spawn the minor markers
+        var minorMarkerIndex = 0;
+        foreach (var markerPos in minorMarkersToSpawn) {
+            SpawnMinorMarker(minorMarkerIndex, markerPos);
+            minorMarkerIndex++;
         }
     }
 
-    private void SpawnWaypointMarker(Vector3 position) {
-        var markerNode = new MeshInstance3D();
-        markerNode.Mesh = _waypointMarkerMeshTemplate;
-        markerNode.Position = position;
-        RouteMarkersHolder.AddChild(markerNode);
-        _spawnedMarkersHolder.Add(markerNode);
+    private void SpawnWaypointMarker(int meshInstanceId, Vector3 instancePos) {
+        var instanceTransform = new Transform3D(Basis.Identity, instancePos);
+        _waypointMarkerMultimesh.SetInstanceTransform(meshInstanceId, instanceTransform);
     }
     
-    private void SpawnMinorMarker(Vector3 position) {
-        var markerNode = new MeshInstance3D();
-        markerNode.Mesh = _minorMarkerMeshTemplate;
-        markerNode.Position = position;
-        RouteMarkersHolder.AddChild(markerNode);
-        _spawnedMarkersHolder.Add(markerNode);
+    private void SpawnMinorMarker(int meshInstanceId, Vector3 instancePos) {
+        var instanceTransform = new Transform3D(Basis.Identity, instancePos);
+        _minorMarkerMultimesh.SetInstanceTransform(meshInstanceId, instanceTransform);
     }
     
     public void ClearDisplayedMarkers() {
-        foreach (var spawnedNode in _spawnedMarkersHolder) {
-            spawnedNode.Free();
-        }
-        _spawnedMarkersHolder.Clear();
+        _waypointMarkerMultimesh.InstanceCount = 0;
+        _minorMarkerMultimesh.InstanceCount = 0;
     }
 }

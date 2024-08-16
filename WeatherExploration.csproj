@@ -13,7 +13,4 @@
     <PackageReference Update="GodotSharp" Version="4.3.0-dev.6" />
     <PackageReference Update="Godot.SourceGenerators" Version="4.3.0-dev.6" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Shader\ComputeShader.glsl" />
-  </ItemGroup>
 </Project>
