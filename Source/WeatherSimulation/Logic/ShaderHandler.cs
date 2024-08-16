@@ -14,10 +14,15 @@ public class ShaderHandler {
     
     private Rid _computeShaderRid;
     private Rid _temperatureTexRid;
+    private Rid _temperatureTexOutRid;
     private Rid _uniformSetRid;
     private Rid _pipelineRid;
 
     private Image _temperatureTexImage;
+
+    //update to be current with the invocation set in actual compute shader (defines amount of dispatched workgroups here)
+    //TODO: also - it seems that the texture resolution now has to be a multiple of 8 for this to work corectly?
+    private const int ShaderWorkgroupInvocationSize = 8;
     
     public ShaderHandler(SimulationSettings simulationSettings) {
         _simulationSettings = simulationSettings;
@@ -59,8 +64,26 @@ public class ShaderHandler {
         temperatureTexUniform.Binding = 0;
         
         temperatureTexUniform.AddId(_temperatureTexRid);
+        
+        var temperatureTexOutFormat = new RDTextureFormat();
+        temperatureTexOutFormat.Format = RenderingDevice.DataFormat.R8Unorm;
+        temperatureTexOutFormat.Height = textureRes;
+        temperatureTexOutFormat.Width = textureRes;
+        temperatureTexOutFormat.UsageBits = RenderingDevice.TextureUsageBits.StorageBit |
+                                            RenderingDevice.TextureUsageBits.CanUpdateBit |
+                                            RenderingDevice.TextureUsageBits.CanCopyFromBit |
+                                            RenderingDevice.TextureUsageBits.CanCopyToBit;
 
-        _uniformSetRid = _renderingDevice.UniformSetCreate([temperatureTexUniform], _computeShaderRid, 0);
+        var temperatureTexOutView = new RDTextureView();
+        _temperatureTexOutRid = _renderingDevice.TextureCreate(temperatureTexOutFormat, temperatureTexOutView);
+
+        var temperatureTexOutUniform = new RDUniform();
+        temperatureTexOutUniform.UniformType = RenderingDevice.UniformType.Image;
+        temperatureTexOutUniform.Binding = 1;
+        
+        temperatureTexOutUniform.AddId(_temperatureTexOutRid);
+        
+        _uniformSetRid = _renderingDevice.UniformSetCreate([temperatureTexUniform, temperatureTexOutUniform], _computeShaderRid, 0);
     }
 
     private void CreatePipeline() {
@@ -73,7 +96,11 @@ public class ShaderHandler {
 
     private Image StepComputeShader(Image temperatureTex) {
         //update texture data
+        //TODO: these have mipmaps, actually, but setting them by setMipmaps(0) in the decalrations above causes errors here?
+        //I assumed that having mipmaps is always suboptimal in this case, because I don't need any interpolated values, but raw data only
+        //but perhaps the base texture instance is also treated as a mipmap in and of itself?
         _renderingDevice.TextureUpdate(_temperatureTexRid, 0, temperatureTex.GetData());
+        _renderingDevice.TextureClear(_temperatureTexOutRid, Colors.Black, 0, 1, 0, 1);
 
         //init compute list
         var computeList = _renderingDevice.ComputeListBegin();
@@ -83,8 +110,8 @@ public class ShaderHandler {
         _renderingDevice.ComputeListBindUniformSet(computeList, _uniformSetRid, 0);
         
         //declare work group dispatch
-        //TODO: setup proper inputs for the group sizes for optimal performance
-        _renderingDevice.ComputeListDispatch(computeList, 1,1,1);
+        var groupCount = (uint) _simulationRes / ShaderWorkgroupInvocationSize;
+        _renderingDevice.ComputeListDispatch(computeList, groupCount,groupCount,1);
         _renderingDevice.ComputeListEnd();
         
         //submit the compute list to the GPU
@@ -95,7 +122,7 @@ public class ShaderHandler {
         _renderingDevice.Sync();
 
         //create and image from the resultant data
-        var outputByteStream = _renderingDevice.TextureGetData(_temperatureTexRid, 0);
+        var outputByteStream = _renderingDevice.TextureGetData(_temperatureTexOutRid, 0);
         var temperatureTexImage =
             Image.CreateFromData(_simulationRes, _simulationRes, false, Image.Format.R8, outputByteStream);
         

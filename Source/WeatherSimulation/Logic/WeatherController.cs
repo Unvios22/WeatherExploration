@@ -50,8 +50,7 @@ public partial class WeatherController : Node3D {
         
         return noiseImage;
     }
-
-
+    
     public override void _Process(double delta) {
         // if (_stepTimer >= SimTimeStep) {
         //     Step();
@@ -67,8 +66,8 @@ public partial class WeatherController : Node3D {
         GD.Print("Step Simulation");
         var newTemperatureTex = _simulationShaderHandler.Step(_temperatureTexture);
         
-        GD.Print("Assign result image to plane texture");
         AssignImageToPlane(newTemperatureTex);
+        _temperatureTexture = newTemperatureTex;
         
         // var totalTemp = 0f;
         // foreach (var value in newTemperatureTex) {
