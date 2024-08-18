@@ -18,6 +18,10 @@ public partial class WeatherController : Node3D {
     private RandomNumberGenerator _randomNumberGenerator;
 
     private Image _airMovementTex;
+    
+    //TODO: this is pass-by-value (class), and thus is actually also directly referenced in th ShaderHandler class
+    //either refactor to have only one class hold the VectorGrid or have VectorGrid be a struct(?)
+    private VectorGrid _pressureGradient;
 
     private ShaderHandler _simulationShaderHandler;
 
@@ -41,8 +45,8 @@ public partial class WeatherController : Node3D {
 
     private void SetupSimulation() {
         var windData = CreateWindData();
-        var windData1D = Parse2DVector4ArrayTo1DArray(windData, 2);
-        _simulationShaderHandler = new ShaderHandler(_simulationSettings, windData1D);
+        _pressureGradient = new VectorGrid(windData, 2);
+        _simulationShaderHandler = new ShaderHandler(_simulationSettings, _pressureGradient);
     }
 
     private Vector4[,] CreateWindData() {
@@ -50,28 +54,6 @@ public partial class WeatherController : Node3D {
             { new Vector4(1, 1, 1, 1), new Vector4(2, 2, 2, 2) },
             { new Vector4(3, 3, 3, 3), new Vector4(4, 4, 4, 4) }
         };
-    }
-
-    private Vector4[,] Parse1DVector4ArrayTo2DArray(Vector4[] array1D, uint resolution) {
-        var result2DArray = new Vector4[resolution, resolution];
-        for (var x = 0; x < resolution; x++) {
-            for (var y = 0; y < resolution; y++) {
-                var index = x * resolution + y;
-                result2DArray[x, y] = array1D[index];
-            }
-        }
-        return result2DArray;
-    }
-
-    private Vector4[] Parse2DVector4ArrayTo1DArray(Vector4[,] array2D, uint resolution) {
-        var result1DArray = new Vector4[resolution * resolution];
-        for (var x = 0; x < resolution; x++) {
-            for (var y = 0; y < resolution; y++) {
-                var index = x * resolution + y;
-                result1DArray[index] = array2D[x, y];
-            }
-        }
-        return result1DArray;
     }
     
     private Image CreateAirMovementTexture() {
@@ -94,7 +76,7 @@ public partial class WeatherController : Node3D {
         
         GD.Print("Step Simulation");
         var newWindData = _simulationShaderHandler.Step();
-        var newWindData2D = Parse1DVector4ArrayTo2DArray(newWindData, 2);
+        var newWindData2D = _pressureGradient.GetDataAs2DArray();
         GD.Print(newWindData.ToString());
         
         // var totalTemp = 0f;

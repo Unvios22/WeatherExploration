@@ -1,6 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using Godot;
+﻿using Godot;
 using WeatherExploration.Source.Config;
 using WeatherExploration.Source.WeatherSimulation.Model;
 
@@ -20,17 +18,17 @@ public class ShaderHandler {
     private Rid _uniformSetRid;
     private Rid _pipelineRid;
 
-    private Vector4[] _windData;
+    private VectorGrid _pressureGradient;
 
     //update to be current with the invocation set in actual compute shader (defines amount of dispatched workgroups here)
     //TODO: also - it seems that the texture resolution now has to be a multiple of 8 for this to work corectly?
     private const int ShaderWorkgroupInvocationSize = 8;
     
-    public ShaderHandler(SimulationSettings simulationSettings, Vector4[] windData) {
+    public ShaderHandler(SimulationSettings simulationSettings, VectorGrid pressureGradient) {
         _simulationSettings = simulationSettings;
         _simulationRes = (int)_simulationSettings.TextureResolution;
         
-        _windData = windData;
+        _pressureGradient = pressureGradient;
         
         InitRenderingDevice();
         LoadShader();
@@ -50,16 +48,15 @@ public class ShaderHandler {
     }
     
     private void DeclareUniformSet() {
-
-        var windDataByteStream = GetWindDataAsByteStream(_windData);
-        _inputWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)windDataByteStream.Length, windDataByteStream);
+        var pressureGradientByteStream = _pressureGradient.GetDataAsByteStream();
+        _inputWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientByteStream.Length, pressureGradientByteStream);
 
         var inputWindDataUniform = new RDUniform();
         inputWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
         inputWindDataUniform.Binding = 0;
         inputWindDataUniform.AddId(_inputWindDataBufferRid);
         
-        _resultWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)windDataByteStream.Length);
+        _resultWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientByteStream.Length);
         
         var resultWindDataUniform = new RDUniform();
         resultWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
@@ -80,7 +77,7 @@ public class ShaderHandler {
     private Vector4[] StepComputeShader() {
         
         //update shader data
-        var windDataByteStream = GetWindDataAsByteStream(_windData);
+        var windDataByteStream = _pressureGradient.GetDataAsByteStream();
         _renderingDevice.BufferUpdate(_inputWindDataBufferRid, 0, (uint)windDataByteStream.Length, windDataByteStream);
 
         //init compute list
@@ -104,53 +101,7 @@ public class ShaderHandler {
 
         //create and image from the resultant data
         var outputByteStream = _renderingDevice.BufferGetData(_resultWindDataBufferRid);
-        _windData = GetWindDataFromByteStream(outputByteStream);
-        return _windData;
-    }
-
-    private byte[] GetWindDataAsByteStream(Vector4[] windData) {
-        //each Vector4 has 4 floats
-        var windMapInputBytes = new byte[windData.Length * sizeof(float) * 4];
-        
-        //can't use Buffer.BlockCopy, because an array of Vector4 structs (each consisting of floats only) definitely doesn't contain primitives by c#'s standards
-        //as per https://stackoverflow.com/questions/33181945/blockcopy-a-class-getting-object-must-be-an-array-of-primitives
-        //life is pain
-
-        var byteIndex = 0L;
-        for (var i = 0; i < windData.Length; i++) {
-            var floatBytes = BitConverter.GetBytes(windData[i].X);
-            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
-            byteIndex+= sizeof(float);
-            
-            floatBytes = BitConverter.GetBytes(windData[i].Y);
-            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
-            byteIndex+= sizeof(float);
-            
-            floatBytes = BitConverter.GetBytes(windData[i].Z);
-            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
-            byteIndex+= sizeof(float);
-            
-            floatBytes = BitConverter.GetBytes(windData[i].W);
-            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
-            byteIndex+= sizeof(float);
-        }
-        return windMapInputBytes;
-    }
-    
-    private Vector4[] GetWindDataFromByteStream(byte[] byteStream) {
-        const int sizeOfFloat = sizeof(float);
-        //each vector4 has 4 floats, each float has sizeof(float) bytes
-        var convertedWindData = new Vector4[byteStream.Length / (sizeOfFloat * 4)];
-        for (var i = 0; i < convertedWindData.Length; i++) {
-            var thisVector4InitialFloatIndex = i * sizeOfFloat * 4;
-            
-            var x = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex);
-            var y = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex + sizeOfFloat);
-            var z = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex + sizeOfFloat * 2);
-            var w = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex + sizeOfFloat * 3);
-            
-            convertedWindData[i] = new Vector4(x, y, z, w);
-        }
-        return convertedWindData;
+        _pressureGradient.SetData(outputByteStream);
+        return _pressureGradient.GetDataAs1DArray();
     }
 }

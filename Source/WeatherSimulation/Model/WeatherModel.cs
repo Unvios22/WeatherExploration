@@ -1,13 +1,14 @@
-﻿using WeatherExploration.WeatherSimulation.Model;
+﻿using Godot;
 
 namespace WeatherExploration.Source.WeatherSimulation.Model;
 
 public struct WeatherModel {
     public uint TextureResolution;
-    public AtmosphereModel AtmosphereModel;
+
+    public Image PressureImage;
+    public VectorGrid PressureGradient;
 
     public WeatherModel(uint textureResolution) {
         TextureResolution = textureResolution;
-        AtmosphereModel = new AtmosphereModel();
     }
 }
