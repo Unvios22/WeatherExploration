@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using Godot;
 using WeatherExploration.Source.WeatherSimulation.Model;
 using WeatherExploration.WeatherSimulation.Model;
@@ -16,7 +17,7 @@ public partial class WeatherController : Node3D {
     private FastNoiseLite _noiseGenerator;
     private RandomNumberGenerator _randomNumberGenerator;
 
-    private Image _temperatureTexture;
+    private Image _airMovementTex;
 
     private ShaderHandler _simulationShaderHandler;
 
@@ -39,35 +40,62 @@ public partial class WeatherController : Node3D {
     }
 
     private void SetupSimulation() {
-        _temperatureTexture = CreateTemperatureTexture();
-        _simulationShaderHandler = new ShaderHandler(_simulationSettings);
+        var windData = CreateWindData();
+        var windData1D = Parse2DVector4ArrayTo1DArray(windData, 2);
+        _simulationShaderHandler = new ShaderHandler(_simulationSettings, windData1D);
     }
 
-    private Image CreateTemperatureTexture() {
+    private Vector4[,] CreateWindData() {
+        return new Vector4[,] {
+            { new Vector4(1, 1, 1, 1), new Vector4(2, 2, 2, 2) },
+            { new Vector4(3, 3, 3, 3), new Vector4(4, 4, 4, 4) }
+        };
+    }
+
+    private Vector4[,] Parse1DVector4ArrayTo2DArray(Vector4[] array1D, uint resolution) {
+        var result2DArray = new Vector4[resolution, resolution];
+        for (var x = 0; x < resolution; x++) {
+            for (var y = 0; y < resolution; y++) {
+                var index = x * resolution + y;
+                result2DArray[x, y] = array1D[index];
+            }
+        }
+        return result2DArray;
+    }
+
+    private Vector4[] Parse2DVector4ArrayTo1DArray(Vector4[,] array2D, uint resolution) {
+        var result1DArray = new Vector4[resolution * resolution];
+        for (var x = 0; x < resolution; x++) {
+            for (var y = 0; y < resolution; y++) {
+                var index = x * resolution + y;
+                result1DArray[index] = array2D[x, y];
+            }
+        }
+        return result1DArray;
+    }
+    
+    private Image CreateAirMovementTexture() {
         _noiseGenerator.Seed = _randomNumberGenerator.RandiRange(-100, 100);
-        var noiseImage = _noiseGenerator.GetImage((int)_simulationSettings.TextureResolution, (int)_simulationSettings.TextureResolution);
-        noiseImage.Convert(Image.Format.R8);
+        var noiseImage = _noiseGenerator.GetImage((int)_simulationSettings.TextureResolution, (int)_simulationSettings.TextureResolution,false, false, false);
+        noiseImage.Convert(Image.Format.BptcRgbf);
         
         return noiseImage;
     }
     
     public override void _Process(double delta) {
-        // if (_stepTimer >= SimTimeStep) {
-        //     Step();
-        //     _stepTimer = 0f;
-        // }
-        // _stepTimer += delta;
-        Step();
+        if (_stepTimer >= SimTimeStep) {
+            Step();
+            _stepTimer = 0f;
+        }
+        _stepTimer += delta;
     }
 
     private void Step() {
-        //currently operating on pressure texture only
         
         GD.Print("Step Simulation");
-        var newTemperatureTex = _simulationShaderHandler.Step(_temperatureTexture);
-        
-        AssignImageToPlane(newTemperatureTex);
-        _temperatureTexture = newTemperatureTex;
+        var newWindData = _simulationShaderHandler.Step();
+        var newWindData2D = Parse1DVector4ArrayTo2DArray(newWindData, 2);
+        GD.Print(newWindData.ToString());
         
         // var totalTemp = 0f;
         // foreach (var value in newTemperatureTex) {

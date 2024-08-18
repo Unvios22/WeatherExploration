@@ -17,7 +17,6 @@ public class WeatherSimulator {
         for (var i = 0; i < _settings.IterationsPerStep; i++) {
             StepTemperature(); 
         }
-        
         return _model;
     }
 

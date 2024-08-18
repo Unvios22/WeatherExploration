@@ -1,4 +1,6 @@
-﻿using Godot;
+﻿using System;
+using System.Runtime.InteropServices;
+using Godot;
 using WeatherExploration.Source.Config;
 using WeatherExploration.Source.WeatherSimulation.Model;
 
@@ -13,20 +15,22 @@ public class ShaderHandler {
     private readonly int _simulationRes;
     
     private Rid _computeShaderRid;
-    private Rid _temperatureTexRid;
-    private Rid _temperatureTexOutRid;
+    private Rid _inputWindDataBufferRid;
+    private Rid _resultWindDataBufferRid;
     private Rid _uniformSetRid;
     private Rid _pipelineRid;
 
-    private Image _temperatureTexImage;
+    private Vector4[] _windData;
 
     //update to be current with the invocation set in actual compute shader (defines amount of dispatched workgroups here)
     //TODO: also - it seems that the texture resolution now has to be a multiple of 8 for this to work corectly?
     private const int ShaderWorkgroupInvocationSize = 8;
     
-    public ShaderHandler(SimulationSettings simulationSettings) {
+    public ShaderHandler(SimulationSettings simulationSettings, Vector4[] windData) {
         _simulationSettings = simulationSettings;
         _simulationRes = (int)_simulationSettings.TextureResolution;
+        
+        _windData = windData;
         
         InitRenderingDevice();
         LoadShader();
@@ -46,61 +50,38 @@ public class ShaderHandler {
     }
     
     private void DeclareUniformSet() {
-        var textureRes = _simulationSettings.TextureResolution;
-        
-        var temperatureTexFormat = new RDTextureFormat();
-        temperatureTexFormat.Format = RenderingDevice.DataFormat.R8Unorm;
-        temperatureTexFormat.Height = textureRes;
-        temperatureTexFormat.Width = textureRes;
-        temperatureTexFormat.UsageBits = RenderingDevice.TextureUsageBits.StorageBit |
-                                  RenderingDevice.TextureUsageBits.CanUpdateBit |
-                                  RenderingDevice.TextureUsageBits.CanCopyFromBit;
 
-        var temperatureTexView = new RDTextureView();
-        _temperatureTexRid = _renderingDevice.TextureCreate(temperatureTexFormat, temperatureTexView);
+        var windDataByteStream = GetWindDataAsByteStream(_windData);
+        _inputWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)windDataByteStream.Length, windDataByteStream);
 
-        var temperatureTexUniform = new RDUniform();
-        temperatureTexUniform.UniformType = RenderingDevice.UniformType.Image;
-        temperatureTexUniform.Binding = 0;
+        var inputWindDataUniform = new RDUniform();
+        inputWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
+        inputWindDataUniform.Binding = 0;
+        inputWindDataUniform.AddId(_inputWindDataBufferRid);
         
-        temperatureTexUniform.AddId(_temperatureTexRid);
+        _resultWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)windDataByteStream.Length);
         
-        var temperatureTexOutFormat = new RDTextureFormat();
-        temperatureTexOutFormat.Format = RenderingDevice.DataFormat.R8Unorm;
-        temperatureTexOutFormat.Height = textureRes;
-        temperatureTexOutFormat.Width = textureRes;
-        temperatureTexOutFormat.UsageBits = RenderingDevice.TextureUsageBits.StorageBit |
-                                            RenderingDevice.TextureUsageBits.CanUpdateBit |
-                                            RenderingDevice.TextureUsageBits.CanCopyFromBit |
-                                            RenderingDevice.TextureUsageBits.CanCopyToBit;
-
-        var temperatureTexOutView = new RDTextureView();
-        _temperatureTexOutRid = _renderingDevice.TextureCreate(temperatureTexOutFormat, temperatureTexOutView);
-
-        var temperatureTexOutUniform = new RDUniform();
-        temperatureTexOutUniform.UniformType = RenderingDevice.UniformType.Image;
-        temperatureTexOutUniform.Binding = 1;
+        var resultWindDataUniform = new RDUniform();
+        resultWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
+        resultWindDataUniform.Binding = 1;
+        resultWindDataUniform.AddId(_resultWindDataBufferRid);
         
-        temperatureTexOutUniform.AddId(_temperatureTexOutRid);
-        
-        _uniformSetRid = _renderingDevice.UniformSetCreate([temperatureTexUniform, temperatureTexOutUniform], _computeShaderRid, 0);
+        _uniformSetRid = _renderingDevice.UniformSetCreate([inputWindDataUniform, resultWindDataUniform], _computeShaderRid, 0);
     }
-
+    
     private void CreatePipeline() {
         _pipelineRid = _renderingDevice.ComputePipelineCreate(_computeShaderRid);
     }
     
-    public Image Step(Image temperatureTexImage) {
-       return StepComputeShader(temperatureTexImage);
+    public Vector4[] Step() {
+       return StepComputeShader();
     }
 
-    private Image StepComputeShader(Image temperatureTex) {
-        //update texture data
-        //TODO: these have mipmaps, actually, but setting them by setMipmaps(0) in the decalrations above causes errors here?
-        //I assumed that having mipmaps is always suboptimal in this case, because I don't need any interpolated values, but raw data only
-        //but perhaps the base texture instance is also treated as a mipmap in and of itself?
-        _renderingDevice.TextureUpdate(_temperatureTexRid, 0, temperatureTex.GetData());
-        _renderingDevice.TextureClear(_temperatureTexOutRid, Colors.Black, 0, 1, 0, 1);
+    private Vector4[] StepComputeShader() {
+        
+        //update shader data
+        var windDataByteStream = GetWindDataAsByteStream(_windData);
+        _renderingDevice.BufferUpdate(_inputWindDataBufferRid, 0, (uint)windDataByteStream.Length, windDataByteStream);
 
         //init compute list
         var computeList = _renderingDevice.ComputeListBegin();
@@ -122,10 +103,54 @@ public class ShaderHandler {
         _renderingDevice.Sync();
 
         //create and image from the resultant data
-        var outputByteStream = _renderingDevice.TextureGetData(_temperatureTexOutRid, 0);
-        var temperatureTexImage =
-            Image.CreateFromData(_simulationRes, _simulationRes, false, Image.Format.R8, outputByteStream);
+        var outputByteStream = _renderingDevice.BufferGetData(_resultWindDataBufferRid);
+        _windData = GetWindDataFromByteStream(outputByteStream);
+        return _windData;
+    }
+
+    private byte[] GetWindDataAsByteStream(Vector4[] windData) {
+        //each Vector4 has 4 floats
+        var windMapInputBytes = new byte[windData.Length * sizeof(float) * 4];
         
-        return temperatureTexImage;
+        //can't use Buffer.BlockCopy, because an array of Vector4 structs (each consisting of floats only) definitely doesn't contain primitives by c#'s standards
+        //as per https://stackoverflow.com/questions/33181945/blockcopy-a-class-getting-object-must-be-an-array-of-primitives
+        //life is pain
+
+        var byteIndex = 0L;
+        for (var i = 0; i < windData.Length; i++) {
+            var floatBytes = BitConverter.GetBytes(windData[i].X);
+            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
+            byteIndex+= sizeof(float);
+            
+            floatBytes = BitConverter.GetBytes(windData[i].Y);
+            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
+            byteIndex+= sizeof(float);
+            
+            floatBytes = BitConverter.GetBytes(windData[i].Z);
+            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
+            byteIndex+= sizeof(float);
+            
+            floatBytes = BitConverter.GetBytes(windData[i].W);
+            Array.Copy(floatBytes, 0, windMapInputBytes,byteIndex, sizeof(float));
+            byteIndex+= sizeof(float);
+        }
+        return windMapInputBytes;
+    }
+    
+    private Vector4[] GetWindDataFromByteStream(byte[] byteStream) {
+        const int sizeOfFloat = sizeof(float);
+        //each vector4 has 4 floats, each float has sizeof(float) bytes
+        var convertedWindData = new Vector4[byteStream.Length / (sizeOfFloat * 4)];
+        for (var i = 0; i < convertedWindData.Length; i++) {
+            var thisVector4InitialFloatIndex = i * sizeOfFloat * 4;
+            
+            var x = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex);
+            var y = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex + sizeOfFloat);
+            var z = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex + sizeOfFloat * 2);
+            var w = BitConverter.ToSingle(byteStream, thisVector4InitialFloatIndex + sizeOfFloat * 3);
+            
+            convertedWindData[i] = new Vector4(x, y, z, w);
+        }
+        return convertedWindData;
     }
 }
