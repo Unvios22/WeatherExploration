@@ -70,11 +70,11 @@ public class ShaderHandler {
         _pipelineRid = _renderingDevice.ComputePipelineCreate(_computeShaderRid);
     }
     
-    public Vector4[] Step() {
+    public VectorGrid Step() {
        return StepComputeShader();
     }
 
-    private Vector4[] StepComputeShader() {
+    private VectorGrid StepComputeShader() {
         
         //update shader data
         var windDataByteStream = _pressureGradient.GetDataAsByteStream();
@@ -102,6 +102,6 @@ public class ShaderHandler {
         //create and image from the resultant data
         var outputByteStream = _renderingDevice.BufferGetData(_resultWindDataBufferRid);
         _pressureGradient.SetData(outputByteStream);
-        return _pressureGradient.GetDataAs1DArray();
+        return _pressureGradient;
     }
 }

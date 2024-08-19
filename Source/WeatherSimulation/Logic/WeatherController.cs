@@ -1,6 +1,7 @@
 ﻿
 using System;
 using Godot;
+using WeatherExploration.Source.WeatherSimulation.DebugDisplay;
 using WeatherExploration.Source.WeatherSimulation.Model;
 using WeatherExploration.WeatherSimulation.Model;
 
@@ -24,6 +25,9 @@ public partial class WeatherController : Node3D {
     private VectorGrid _pressureGradient;
 
     private ShaderHandler _simulationShaderHandler;
+    private WeatherDataDebugDisplay _weatherDataWorldSpaceDisplay;
+    private const float CellWorldSpaceSize = 0.5f;
+    
 
     public override void _Ready() {
         Initialize();
@@ -33,6 +37,7 @@ public partial class WeatherController : Node3D {
         //it is assumed the simulation settings are already set up in-editor
         SetupNoiseGenerator();
         SetupSimulation();
+        SetupDebugWorldSpaceDisplay();
     }
 
     private void SetupNoiseGenerator() {
@@ -47,6 +52,11 @@ public partial class WeatherController : Node3D {
         var windData = CreateWindData();
         _pressureGradient = new VectorGrid(windData, 2);
         _simulationShaderHandler = new ShaderHandler(_simulationSettings, _pressureGradient);
+    }
+
+    private void SetupDebugWorldSpaceDisplay() {
+        _weatherDataWorldSpaceDisplay = new WeatherDataDebugDisplay(2, CellWorldSpaceSize, this, this);
+        _weatherDataWorldSpaceDisplay.InitWorldSpaceDisplay();
     }
 
     private Vector4[,] CreateWindData() {
@@ -75,9 +85,9 @@ public partial class WeatherController : Node3D {
     private void Step() {
         
         GD.Print("Step Simulation");
-        var newWindData = _simulationShaderHandler.Step();
-        var newWindData2D = _pressureGradient.GetDataAs2DArray();
-        GD.Print(newWindData.ToString());
+        var newPressureGradient = _simulationShaderHandler.Step();
+        _pressureGradient = newPressureGradient;
+        UpdateWorldSpaceDisplay();
         
         // var totalTemp = 0f;
         // foreach (var value in newTemperatureTex) {
@@ -98,22 +108,9 @@ public partial class WeatherController : Node3D {
     //     AssignImageToPlane(imageTex);
     // }
 
-    private float[] ConvertByteStreamToFloatArray(byte[] stream) {
-        var convertedFloatArray = new float[stream.Length / sizeof(float)];
-        for (var i = 0; i < convertedFloatArray.Length; i++) {
-            convertedFloatArray[i] = BitConverter.ToSingle(stream, i * sizeof(float));
-        }
-
-        return convertedFloatArray;
-    }
-
-    private byte[] ConvertFloatArrayToByteStream(float[] floatArray) {
-        var byteStream = new byte[floatArray.Length * sizeof(float)];
-        for (var i = 0; i < floatArray.Length; i++) {
-            BitConverter.GetBytes(floatArray[i]).CopyTo(byteStream, i * sizeof(float));
-        }
-
-        return byteStream;
+    private void UpdateWorldSpaceDisplay() {
+        _weatherDataWorldSpaceDisplay.SetPressureGradient(_pressureGradient);
+        _weatherDataWorldSpaceDisplay.RefreshDisplay();
     }
     
     private void AssignImageToPlane(Image image) {
@@ -121,35 +118,4 @@ public partial class WeatherController : Node3D {
         _displayPlaneMesh.GetSurfaceOverrideMaterial(0).Set("albedo_texture", texture2D);
     }
     
-    private float[,] Parse1Dto2DArray(float[] array1D) {
-        var textureRes = _simulationSettings.TextureResolution;
-        var array2D = new float[textureRes,textureRes];
-
-        var index = 0;
-        
-        //todo check whether texture is x or y first
-        for (var x = 0; x < textureRes; x++) {
-            for (var y = 0; y < textureRes; y++) {
-                array2D[x, y] = array1D[index];
-                index++;
-            }
-        }
-
-        return array2D;
-    }
-
-    private float[] Parse2DArrayTo1DArray(float[,] array2D) {
-        var textureRes = _simulationSettings.TextureResolution;
-        var array1D = new float[textureRes * textureRes];
-
-        var index = 0;
-        for (var x = 0; x < textureRes; x++) {
-            for (var y = 0; y < textureRes; y++) {
-                array1D[index] = array2D[x, y];
-                index++;
-            }
-        }
-
-        return array1D;
-    }
 }
