@@ -36,6 +36,8 @@ public class WeatherDataWorldSpaceDisplay {
         _multiMesh = new MultiMesh();
         _multiMesh.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
         var multimeshInstanceTemplate = _simulationWorldDisplaySettings.PressureGradientDisplayInstanceMesh;
+        var meshInstanceMaterial = _simulationWorldDisplaySettings.PressureGradientMeshesMaterial;
+        multimeshInstanceTemplate.SurfaceSetMaterial(0, meshInstanceMaterial);
         _multiMesh.SetMesh(multimeshInstanceTemplate);
 
         var multiMeshInstance3d = new MultiMeshInstance3D();
@@ -46,12 +48,16 @@ public class WeatherDataWorldSpaceDisplay {
     public void InitWorldSpaceDisplay() {
         GeneratePressureGradientMultimeshGrid();
         GenerateTextureDisplayPlane();
+        GenerateBoundingBox();
     }
 
     private void GeneratePressureGradientMultimeshGrid() {
-        var worldSpaceGridEdgeLength = _simulationSettings.TextureResolution * _simulationWorldDisplaySettings.WorldSpaceGridCellSize;
-        var initialElementFromOriginTranslation = new Vector3(-worldSpaceGridEdgeLength, 0, -worldSpaceGridEdgeLength);
-        var initialElementPos = _displayOriginNode.Position + initialElementFromOriginTranslation;
+        var gridRes = (float)_simulationSettings.TextureResolution;
+        var gridCellLength = _simulationWorldDisplaySettings.WorldSpaceGridCellSize;
+        var centerToEdgeCellDistance = (gridRes - 1) / 2.0f * gridCellLength;
+        var toInitialElementTranslation = new Vector3(-centerToEdgeCellDistance, _simulationWorldDisplaySettings.DynamicElementsVerticalOffset, -centerToEdgeCellDistance);
+        var initialElementPos = _displayOriginNode.GlobalPosition + toInitialElementTranslation;
+        
         PopulateWorldSpaceGrid(initialElementPos);
     }
 
@@ -74,10 +80,34 @@ public class WeatherDataWorldSpaceDisplay {
         _texDisplayPlane = imagePlane;
         
         //assuming the plane has worldspace size of 1 by default @ scale 1
-        var planeWorldSpaceScale = _simulationWorldDisplaySettings.WorldSpaceGridCellSize *_simulationSettings.TextureResolution; 
+        var planeWorldSpaceScale = (_simulationWorldDisplaySettings.WorldSpaceGridCellSize *_simulationSettings.TextureResolution)/2; 
         _texDisplayPlane.Scale = new Vector3(planeWorldSpaceScale, 1, planeWorldSpaceScale);
-        _texDisplayPlane.SetMaterialOverride(new Material());
+        
+        var displayPlaneMaterial = _simulationWorldDisplaySettings.TexturePlaneMaterial;
+        _texDisplayPlane.SetMaterialOverride(displayPlaneMaterial);
         _displayNodesHolder.AddChild(imagePlane);
+    }
+    
+    //TODO: can be encapsulated into a util class
+    private void GenerateBoundingBox() {
+        var boundingBoxHolder = new MeshInstance3D();
+        var immediateMesh = new ImmediateMesh();
+        boundingBoxHolder.Mesh = immediateMesh;
+        
+        immediateMesh.SurfaceBegin(Mesh.PrimitiveType.LineStrip, _simulationWorldDisplaySettings.BoundingBoxMaterial);
+        var gridEdgeLength = _simulationWorldDisplaySettings.WorldSpaceGridCellSize * _simulationSettings.TextureResolution;
+        var originPos = _displayOriginNode.GlobalPosition;
+        var verticalOffset = _simulationWorldDisplaySettings.DynamicElementsVerticalOffset;
+        
+        immediateMesh.SurfaceAddVertex(originPos + new Vector3(-gridEdgeLength/2, verticalOffset, -gridEdgeLength/2));
+        immediateMesh.SurfaceAddVertex(originPos + new Vector3(gridEdgeLength/2, verticalOffset, -gridEdgeLength/2));
+        immediateMesh.SurfaceAddVertex(originPos + new Vector3(gridEdgeLength/2, verticalOffset, gridEdgeLength/2));
+        immediateMesh.SurfaceAddVertex(originPos + new Vector3(-gridEdgeLength/2, verticalOffset, gridEdgeLength/2));
+        immediateMesh.SurfaceAddVertex(originPos + new Vector3(-gridEdgeLength/2, verticalOffset, -gridEdgeLength/2));
+        
+        immediateMesh.SurfaceEnd();
+        
+        _displayOriginNode.AddChild(boundingBoxHolder);
     }
 
     public void DestroyWorldSpaceDisplay() {

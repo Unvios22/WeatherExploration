@@ -3,7 +3,7 @@ using WeatherExploration.Source.Input;
 
 namespace WeatherExploration.Source.Controllers;
 
-public partial class CameraController : Node {
+public partial class CameraController : Node3D {
     [Export] private Camera3D _camera;
     [Export] private Node3D _orbitingTarget;
     
