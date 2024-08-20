@@ -32,7 +32,7 @@ public partial class WeatherSimulationController : Node3D {
     private void SetupSimulation() {
         _sourceWeatherDataProvider = new SourceWeatherDataProvider();
         _currentWeatherState = _sourceWeatherDataProvider.CreateInitialWeatherState(_simulationSettings);
-        _simulationCsHandler = new SimulationCSHandler(_simulationSettings, _currentWeatherState);
+        _simulationCsHandler = new SimulationCSHandler(_simulationSettings);
     }
 
     private void SetupWorldSpaceDisplay() {

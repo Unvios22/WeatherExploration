@@ -1,4 +1,5 @@
-﻿using Godot;
+﻿using System;
+using Godot;
 using WeatherExploration.Source.Config;
 using WeatherExploration.Source.WeatherSimulation.Model;
 
@@ -15,6 +16,7 @@ public class SimulationCSHandler {
     //TODO: add some abstraction to simplify (both by boilerplate code and by ease of use) the creation and referencing of RID's & buffers
     
     private Rid _computeShaderRid;
+    private Rid _constantsBufferRid;
     private Rid _inputPressureGradientBufferRid;
     private Rid _resultPressureGradientBufferRid;
     private Rid _uniformSetRid;
@@ -24,13 +26,13 @@ public class SimulationCSHandler {
     //TODO: also - it seems that the texture resolution now has to be a multiple of 8 for this to work corectly?
     private const int ShaderWorkgroupInvocationSize = 8;
     
-    public SimulationCSHandler(SimulationSettings simulationSettings, WeatherState initialWeatherState) {
+    public SimulationCSHandler(SimulationSettings simulationSettings) {
         _simulationSettings = simulationSettings;
         _simulationRes = (int)_simulationSettings.TextureResolution;
         
         InitRenderingDevice();
         LoadShader();
-        DeclareUniformSet(initialWeatherState);
+        DeclareUniformSet();
         CreatePipeline();
     }
 
@@ -45,25 +47,36 @@ public class SimulationCSHandler {
         _computeShaderRid = _renderingDevice.ShaderCreateFromSpirV(shaderBytecode);
     }
     
-    private void DeclareUniformSet(WeatherState initialWeatherState) {
-        //TODO: check whether the gradient can be set up to be populated in-shader for first run, instead of arbitrarily on CPU-side
-        var pressureGradientByteStream = initialWeatherState.PressureGradient.GetDataAsByteStream();
+    private void DeclareUniformSet() {
+        
+        //TODO: standardize used data formats - e.g. some dedicated struct and parser, etc.
+        var constants = new[] { _simulationRes };
+        var constantsBufferByteCount = constants.Length * sizeof(uint);
+        var constantsByteStream = BitConverter.GetBytes(constants[0]);
+        _constantsBufferRid = _renderingDevice.StorageBufferCreate((uint)constantsBufferByteCount, constantsByteStream);
+        
+        var constantsUniform = new RDUniform();
+        constantsUniform.UniformType  = RenderingDevice.UniformType.StorageBuffer;
+        constantsUniform.Binding = 0;
+        constantsUniform.AddId(_constantsBufferRid);
+        
+        //TODO: check whether the gradient can be set up to be populated in-shader for first run, instead of arbitrarily on CPU-side=
         var pressureGradientBufferByteCount = _simulationRes * _simulationRes * sizeof(float) * 4;
         _inputPressureGradientBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientBufferByteCount);
 
         var inputWindDataUniform = new RDUniform();
         inputWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
-        inputWindDataUniform.Binding = 0;
+        inputWindDataUniform.Binding = 1;
         inputWindDataUniform.AddId(_inputPressureGradientBufferRid);
         
         _resultPressureGradientBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientBufferByteCount);
         
         var resultWindDataUniform = new RDUniform();
         resultWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
-        resultWindDataUniform.Binding = 1;
+        resultWindDataUniform.Binding = 2;
         resultWindDataUniform.AddId(_resultPressureGradientBufferRid);
         
-        _uniformSetRid = _renderingDevice.UniformSetCreate([inputWindDataUniform, resultWindDataUniform], _computeShaderRid, 0);
+        _uniformSetRid = _renderingDevice.UniformSetCreate([constantsUniform, inputWindDataUniform, resultWindDataUniform], _computeShaderRid, 0);
     }
     
     private void CreatePipeline() {

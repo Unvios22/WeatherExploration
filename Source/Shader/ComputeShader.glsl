@@ -3,15 +3,17 @@
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(std430, binding = 0) restrict readonly buffer windDirectionMap {
+layout(std430, binding = 0) restrict readonly buffer Constants {
+    uint simulationGridRes;
+};
+
+layout(std430, binding = 1) restrict readonly buffer windDirectionMap {
     vec4 windData[];
 };
 
-layout(std430, binding = 1) restrict writeonly buffer windDirectionMapResult {
+layout(std430, binding = 2) restrict writeonly buffer windDirectionMapResult {
     vec4 resultWindData[];
 };
-
-const int simulationGridRes = 4;
 
 //vec4 solveNeighborInfluence(vec2 baseCellVector, float baseCellMagnitude, ivec2 neighborCoords){
 //    vec4 neighborAmount = imageLoad(airMovementTex, neighborCoords);
@@ -33,19 +35,19 @@ const int simulationGridRes = 4;
 //    }
 //}
 
-int get1DArrIndexFor2DGridPos(ivec2 gridPos){
+uint get1DArrIndexFor2DGridPos(ivec2 gridPos){
     return gridPos.y * simulationGridRes + gridPos.x;
 }
 
 vec4 getCellWindData(ivec2 cellGridPos){
     //infer index in 1D array for a given2D grid position
-    int index = get1DArrIndexFor2DGridPos(cellGridPos);
+    uint index = get1DArrIndexFor2DGridPos(cellGridPos);
     return windData[index];
     
 }
 
 void setResultCellWindData(ivec2 cellGridPos, vec4 windData){
-    int resultArrIndex = get1DArrIndexFor2DGridPos(cellGridPos);
+    uint resultArrIndex = get1DArrIndexFor2DGridPos(cellGridPos);
     resultWindData[resultArrIndex] = windData;
 }
 
