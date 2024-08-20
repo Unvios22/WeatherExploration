@@ -4,7 +4,7 @@ using WeatherExploration.Source.WeatherSimulation.Model;
 
 namespace WeatherExploration.Source.WeatherSimulation.Logic;
 
-public class ShaderHandler {
+public class SimulationCSHandler {
 
     private SimulationSettings _simulationSettings;
 
@@ -12,27 +12,25 @@ public class ShaderHandler {
 
     private readonly int _simulationRes;
     
+    //TODO: add some abstraction to simplify (both by boilerplate code and by ease of use) the creation and referencing of RID's & buffers
+    
     private Rid _computeShaderRid;
-    private Rid _inputWindDataBufferRid;
-    private Rid _resultWindDataBufferRid;
+    private Rid _inputPressureGradientBufferRid;
+    private Rid _resultPressureGradientBufferRid;
     private Rid _uniformSetRid;
     private Rid _pipelineRid;
-
-    private VectorGrid _pressureGradient;
 
     //update to be current with the invocation set in actual compute shader (defines amount of dispatched workgroups here)
     //TODO: also - it seems that the texture resolution now has to be a multiple of 8 for this to work corectly?
     private const int ShaderWorkgroupInvocationSize = 8;
     
-    public ShaderHandler(SimulationSettings simulationSettings, VectorGrid pressureGradient) {
+    public SimulationCSHandler(SimulationSettings simulationSettings, WeatherState initialWeatherState) {
         _simulationSettings = simulationSettings;
         _simulationRes = (int)_simulationSettings.TextureResolution;
         
-        _pressureGradient = pressureGradient;
-        
         InitRenderingDevice();
         LoadShader();
-        DeclareUniformSet();
+        DeclareUniformSet(initialWeatherState);
         CreatePipeline();
     }
 
@@ -47,21 +45,23 @@ public class ShaderHandler {
         _computeShaderRid = _renderingDevice.ShaderCreateFromSpirV(shaderBytecode);
     }
     
-    private void DeclareUniformSet() {
-        var pressureGradientByteStream = _pressureGradient.GetDataAsByteStream();
-        _inputWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientByteStream.Length, pressureGradientByteStream);
+    private void DeclareUniformSet(WeatherState initialWeatherState) {
+        //TODO: check whether the gradient can be set up to be populated in-shader for first run, instead of arbitrarily on CPU-side
+        var pressureGradientByteStream = initialWeatherState.PressureGradient.GetDataAsByteStream();
+        var pressureGradientBufferByteCount = _simulationRes * _simulationRes * sizeof(float) * 4;
+        _inputPressureGradientBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientBufferByteCount);
 
         var inputWindDataUniform = new RDUniform();
         inputWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
         inputWindDataUniform.Binding = 0;
-        inputWindDataUniform.AddId(_inputWindDataBufferRid);
+        inputWindDataUniform.AddId(_inputPressureGradientBufferRid);
         
-        _resultWindDataBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientByteStream.Length);
+        _resultPressureGradientBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientBufferByteCount);
         
         var resultWindDataUniform = new RDUniform();
         resultWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
         resultWindDataUniform.Binding = 1;
-        resultWindDataUniform.AddId(_resultWindDataBufferRid);
+        resultWindDataUniform.AddId(_resultPressureGradientBufferRid);
         
         _uniformSetRid = _renderingDevice.UniformSetCreate([inputWindDataUniform, resultWindDataUniform], _computeShaderRid, 0);
     }
@@ -70,15 +70,17 @@ public class ShaderHandler {
         _pipelineRid = _renderingDevice.ComputePipelineCreate(_computeShaderRid);
     }
     
-    public VectorGrid Step() {
-       return StepComputeShader();
+    public WeatherState Step(WeatherState weatherState) { 
+        DispatchShaderUpdate(weatherState);
+        //TODO: refactor this workflow into async/await
+        //also - this library looks cool: https://github.com/Fractural/GDTask/tree/main
+        return RetrieveShaderData(weatherState);
     }
 
-    private VectorGrid StepComputeShader() {
-        
+    private void DispatchShaderUpdate(WeatherState weatherState) {
         //update shader data
-        var windDataByteStream = _pressureGradient.GetDataAsByteStream();
-        _renderingDevice.BufferUpdate(_inputWindDataBufferRid, 0, (uint)windDataByteStream.Length, windDataByteStream);
+        var pressureGradientByteStream = weatherState.PressureGradient.GetDataAsByteStream();
+        _renderingDevice.BufferUpdate(_inputPressureGradientBufferRid, 0, (uint)pressureGradientByteStream.Length, pressureGradientByteStream);
 
         //init compute list
         var computeList = _renderingDevice.ComputeListBegin();
@@ -94,14 +96,17 @@ public class ShaderHandler {
         
         //submit the compute list to the GPU
         _renderingDevice.Submit();
-        
+    }
+    
+    private WeatherState RetrieveShaderData(WeatherState weatherState) {
         //TODO: this could potentially be done in the background and synced a few frames later; refactor & optimize
         //get the results back from the GPU
         _renderingDevice.Sync();
-
-        //create and image from the resultant data
-        var outputByteStream = _renderingDevice.BufferGetData(_resultWindDataBufferRid);
-        _pressureGradient.SetData(outputByteStream);
-        return _pressureGradient;
+        
+        //update the model with retrieved data
+        var resultPressureGradientByteStream = _renderingDevice.BufferGetData(_resultPressureGradientBufferRid);
+        weatherState.PressureGradient.SetData(resultPressureGradientByteStream);
+        
+        return weatherState;
     }
 }

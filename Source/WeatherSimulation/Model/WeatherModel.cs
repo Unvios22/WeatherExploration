@@ -6,7 +6,7 @@ public struct WeatherModel {
     public uint TextureResolution;
 
     public Image PressureImage;
-    public VectorGrid PressureGradient;
+    public Vector4Grid PressureGradient;
 
     public WeatherModel(uint textureResolution) {
         TextureResolution = textureResolution;

@@ -6,4 +6,5 @@ namespace WeatherExploration.Source.WeatherSimulation.Model;
 public partial class SimulationSettings : Resource {
     [Export] public uint TextureResolution;
     [Export] public uint IterationsPerStep;
+    [Export] public float TimeStep;
 }

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SimulationWorldDisplaySettings" load_steps=4 format=3 uid="uid://co4dg75jt586g"]
+
+[ext_resource type="Script" path="res://Source/WeatherSimulation/Model/SimulationWorldDisplaySettings.cs" id="1_2nbqv"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_jh4by"]
+
+[sub_resource type="Gradient" id="Gradient_vmqqa"]
+
+[resource]
+script = ExtResource("1_2nbqv")
+WorldSpaceGridCellSize = 1.0
+PressureTexValueGradient = SubResource("Gradient_vmqqa")
+PressureGradientDisplayInstanceMesh = SubResource("BoxMesh_jh4by")

@@ -7,7 +7,7 @@ namespace WeatherExploration.Source.Controllers;
 public partial class GameController : Node {
     
     //todo: this is tightly coupled, change to some DI
-    private WeatherController _weatherController;
+    private WeatherSimulationController _weatherSimulationController;
     private const int SimResolution = 1024;
 
     [Export] public MeshInstance3D DebugPlaneMesh;
@@ -18,7 +18,7 @@ public partial class GameController : Node {
     }
 
     private void InitializeVariables() {
-        _weatherController = new WeatherController();
+        _weatherSimulationController = new WeatherSimulationController();
     }
 
     private void InitializeWeatherSim() {

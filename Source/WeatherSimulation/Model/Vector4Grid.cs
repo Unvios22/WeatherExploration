@@ -3,9 +3,12 @@ using Godot;
 
 namespace WeatherExploration.Source.WeatherSimulation.Model;
 
-public class VectorGrid {
+public struct Vector4Grid {
+    //TODO: can be abstracted away into generic class
     private byte[] _data;
     private Vector4[] _1DGridArray;
+    
+    //TODO: can be omitted by using simply [,] overload with simple x * resolution + y parser in property getter/setter
     private Vector4[,] _2DGridArray;
 
     //the resolution is assumed to be immutable past the creation of the VectorGrid
@@ -14,17 +17,17 @@ public class VectorGrid {
     //TODO: this class can be refactored to do with more readable code and less repetition, probably
     //also overriding [] and [,] operators from the base array type might be neat syntax sugar
 
-    public VectorGrid(byte[] gridAsByteStream, uint resolution) {
+    public Vector4Grid(byte[] gridAsByteStream, uint resolution) {
         _data = gridAsByteStream;
         _resolution = resolution;
     }
 
-    public VectorGrid(Vector4[] gridAs1DArray, uint resolution) {
+    public Vector4Grid(Vector4[] gridAs1DArray, uint resolution) {
         _1DGridArray = gridAs1DArray;
         _resolution = resolution;
     }
 
-    public VectorGrid(Vector4[,] gridAs2DArray, uint resolution) {
+    public Vector4Grid(Vector4[,] gridAs2DArray, uint resolution) {
         _2DGridArray = gridAs2DArray;
         _resolution = resolution;
     }
@@ -94,6 +97,7 @@ public class VectorGrid {
         throw new ArgumentException("No VectorGridDataFound");
     }
 
+    //TODO: add as extension function for base Array type
     private static Vector4[,] Parse1DVectorArrayTo2DArray(Vector4[] array1D, uint resolution) {
         var result2DArray = new Vector4[resolution, resolution];
         for (var x = 0; x < resolution; x++) {
@@ -105,6 +109,7 @@ public class VectorGrid {
         return result2DArray;
     }
     
+    //TODO: add as extension function for base Array type
      private static Vector4[] Parse2DVectorArrayTo1DArray(Vector4[,] array2D, uint resolution) {
         var result1DArray = new Vector4[resolution * resolution];
         for (var x = 0; x < resolution; x++) {

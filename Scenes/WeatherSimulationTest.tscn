@@ -1,12 +1,8 @@
 [gd_scene load_steps=7 format=3 uid="uid://cvurgms4b77kw"]
 
-[ext_resource type="Script" path="res://Source/WeatherSimulation/Logic/WeatherController.cs" id="1_b7nc1"]
-[ext_resource type="Script" path="res://Source/WeatherSimulation/Model/SimulationSettings.cs" id="2_ottab"]
-
-[sub_resource type="Resource" id="Resource_bpnf5"]
-script = ExtResource("2_ottab")
-TextureResolution = 512
-IterationsPerStep = 1
+[ext_resource type="Script" path="res://Source/WeatherSimulation/Logic/WeatherSimulationController.cs" id="1_022wt"]
+[ext_resource type="Resource" uid="uid://cu81begenihvf" path="res://Prefabs/SimulationSettings/SimulationSettings.tres" id="2_388a1"]
+[ext_resource type="Resource" uid="uid://co4dg75jt586g" path="res://Prefabs/SimulationSettings/SimulationWorldDisplaySettings.tres" id="3_uvyr7"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_nxw4s"]
 
@@ -27,9 +23,10 @@ disable_receive_shadows = true
 [node name="WeatherSimulationTest" type="Node3D"]
 
 [node name="WeatherModelController" type="Node3D" parent="." node_paths=PackedStringArray("_displayPlaneMesh")]
-script = ExtResource("1_b7nc1")
+script = ExtResource("1_022wt")
 _displayPlaneMesh = NodePath("MeshInstance3D")
-_simulationSettings = SubResource("Resource_bpnf5")
+_simulationSettings = ExtResource("2_388a1")
+_simulationDisplaySettings = ExtResource("3_uvyr7")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="WeatherModelController"]
 mesh = SubResource("PlaneMesh_nxw4s")
