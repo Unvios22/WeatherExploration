@@ -41,16 +41,17 @@ public partial class WeatherSimulationController : Node3D {
     }
     
     public override void _Process(double delta) {
-        if (_stepTimer >= _simulationSettings.TimeStep) {
-            Step();
-            _stepTimer = 0f;
-        }
-        _stepTimer += delta;
+        // if (_stepTimer >= _simulationSettings.TimeStep) {
+        //     
+        //     _stepTimer = 0f;
+        // }
+        // _stepTimer += delta;
+        Step(delta);
     }
 
-    private void Step() {
+    private void Step(double delta) {
         GD.Print("Step Simulation");
-        _currentWeatherState = _sourceWeatherDataProvider.UpdateWeatherStateSourceData(_currentWeatherState);
+        _currentWeatherState = _sourceWeatherDataProvider.UpdateWeatherStateSourceData(_currentWeatherState, delta);
         var newWeatherState = _simulationCsHandler.Step(_currentWeatherState);
         _currentWeatherState = newWeatherState;
         UpdateWorldSpaceDisplay();

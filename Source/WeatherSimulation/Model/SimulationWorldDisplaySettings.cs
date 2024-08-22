@@ -9,6 +9,7 @@ public partial class SimulationWorldDisplaySettings : Resource {
     [Export] public Mesh PressureGradientDisplayInstanceMesh;
     [Export] public Material PressureGradientMeshesMaterial;
     [Export] public Material TexturePlaneMaterial;
+    [Export] public bool IsDisplayBoundingBox;
     [Export] public Material BoundingBoxMaterial;
     [Export] public float DynamicElementsVerticalOffset;
 }

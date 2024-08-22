@@ -14,7 +14,7 @@ public class SourceWeatherDataProvider {
         var inputResolution = simulationSettings.TextureResolution;
         InitializeDataGenerators(inputResolution);
         
-        var pressureTexture = _pressureTextureGenerator.ProvideInput();
+        var pressureTexture = _pressureTextureGenerator.ProvideInput(0);
         var pressureGradient = GenerateVector4GridPlaceholder(inputResolution);
         
         var weatherState = new WeatherState(pressureTexture, pressureGradient);
@@ -37,9 +37,9 @@ public class SourceWeatherDataProvider {
         _pressureTextureGenerator = new PressureTextureGenerator(inputResolution);
     }
 
-    public WeatherState UpdateWeatherStateSourceData(WeatherState weatherState) {
+    public WeatherState UpdateWeatherStateSourceData(WeatherState weatherState, double delta) {
         //TODO: divide/model the WeatherState fields into "inputs" and "results" for clarity?
-        weatherState.PressureTex = _pressureTextureGenerator.ProvideInput();
+        weatherState.PressureTex = _pressureTextureGenerator.ProvideInput(delta);
         return weatherState;
     }
 }

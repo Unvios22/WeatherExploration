@@ -7,5 +7,5 @@ public abstract class WeatherSourceDataGenerator<T> {
         InputResolution = inputResolution;
     }
     
-    public abstract T ProvideInput();
+    public abstract T ProvideInput(double delta);
 }

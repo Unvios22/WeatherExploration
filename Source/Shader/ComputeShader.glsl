@@ -1,5 +1,5 @@
 ﻿#[compute]
-#version 450
+#version 460
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
@@ -7,77 +7,55 @@ layout(std430, binding = 0) restrict readonly buffer Constants {
     uint simulationGridRes;
 };
 
-layout(std430, binding = 1) restrict readonly buffer windDirectionMap {
-    vec4 windData[];
+layout(r8, binding = 1) restrict readonly uniform image2D pressureTex;
+
+layout(std430, binding = 2) restrict writeonly buffer pressureGradient {
+    vec4 pressureGradientArr[];
 };
 
-layout(std430, binding = 2) restrict writeonly buffer windDirectionMapResult {
-    vec4 resultWindData[];
-};
-
-//vec4 solveNeighborInfluence(vec2 baseCellVector, float baseCellMagnitude, ivec2 neighborCoords){
-//    vec4 neighborAmount = imageLoad(airMovementTex, neighborCoords);
-//
-//    vec2 neighborVector = vec2(neighborAmount.x, neighborAmount.y);
-//    float neighborMagnitude = neighborAmount.z;
-//    
-//    float vectorDot = dot(baseCellVector, neighborVector);
-//
-//    if(vectorDot < 0){
-//
-//        float effectIntensity = vectorDot * -1;
-//        vec2 resultVector = normalize(baseCellVector + (neighborVector * effectIntensity));
-//        float resultMagnitude = baseCellMagnitude - (neighborMagnitude * effectIntensity);
-//        return vec4(resultVector.x, resultVector.y, resultMagnitude, 0);
-//
-//    } else{
-//        return vec4(0,1,0,0);
-//    }
-//}
 
 uint get1DArrIndexFor2DGridPos(ivec2 gridPos){
     return gridPos.y * simulationGridRes + gridPos.x;
 }
 
-vec4 getCellWindData(ivec2 cellGridPos){
+vec4 getCellGPressureGradientVal(ivec2 cellGridPos){
     //infer index in 1D array for a given2D grid position
     uint index = get1DArrIndexFor2DGridPos(cellGridPos);
-    return windData[index];
-    
+    return pressureGradientArr[index];
 }
 
-void setResultCellWindData(ivec2 cellGridPos, vec4 windData){
+void setResultPressureGradient(ivec2 cellGridPos, vec4 gradientValue){
     uint resultArrIndex = get1DArrIndexFor2DGridPos(cellGridPos);
-    resultWindData[resultArrIndex] = windData;
+    pressureGradientArr[resultArrIndex] = gradientValue;
 }
 
-void solveCellWindChange(ivec2 cellCoords){
-    vec4 cellWindData = getCellWindData(cellCoords);
-    setResultCellWindData(cellCoords, cellWindData);
-    
-    
-//    vec4 cellAmount = imageLoad(airMovementTex, cellCoords);
-//    
-//    vec2 airMovementVector = vec2(cellAmount.x, cellAmount.y);
-//    float airMovementMagnitude = cellAmount.z;
-//    
-//    vec4 cellAmountOut = vec4(0,0,0,1);
-//
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(-1, -1));
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(-1, 0));
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(-1, 1));
-//    
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(0, -1));
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(0, 1));
-//    
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(1, -1));
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(1, 0));
-//    cellAmountOut += solveNeighborInfluence(airMovementVector, airMovementMagnitude, ivec2(1, 1));
+float fetchPressureVal(ivec2 cellCoords){
+    return imageLoad(pressureTex, cellCoords).r;
 }
 
-
+void solveCellPressureGradient(ivec2 cellCoords){
+    float cellPressureVal = fetchPressureVal(cellCoords);
+    
+    float nPressureLeftUp = fetchPressureVal(cellCoords + ivec2(-1, 1));
+    float nPressureLeftMid = fetchPressureVal(cellCoords + ivec2(-1, 0));
+    float nPressureLeftDown = fetchPressureVal(cellCoords + ivec2(-1, 0));
+    
+    float nPressureMidUp = fetchPressureVal(cellCoords + ivec2(0, 1));
+    float nPressureMidDown = fetchPressureVal(cellCoords + ivec2(0, -1));
+    
+    float nPressureRightUp = fetchPressureVal(cellCoords + ivec2(1, 1));
+    float nPressureRightMid = fetchPressureVal(cellCoords + ivec2(1, 0));
+    float nPressureRightDown = fetchPressureVal(cellCoords + ivec2(1, -1));
+    
+    float horizontalGradient = ((nPressureRightUp + nPressureRightMid + nPressureRightDown) - (nPressureLeftUp + nPressureLeftMid + nPressureLeftDown)) / 6;
+    float verticalGradient = ((nPressureLeftUp + nPressureMidUp + nPressureRightUp) - (nPressureLeftDown + nPressureMidDown + nPressureRightDown)) / 6;
+    
+    vec4 cellPressureGradient = vec4(horizontalGradient,verticalGradient,1,0);
+    
+    setResultPressureGradient(cellCoords, cellPressureGradient);
+}
 
 void main() {
     ivec2 cellGridPos = ivec2(gl_GlobalInvocationID.xy);
-    solveCellWindChange(cellGridPos);
+    solveCellPressureGradient(cellGridPos);
 }

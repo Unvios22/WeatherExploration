@@ -17,8 +17,8 @@ public class SimulationCSHandler {
     
     private Rid _computeShaderRid;
     private Rid _constantsBufferRid;
-    private Rid _inputPressureGradientBufferRid;
-    private Rid _resultPressureGradientBufferRid;
+    private Rid _pressureTextureRid;
+    private Rid _pressureGradientBufferRid;
     private Rid _uniformSetRid;
     private Rid _pipelineRid;
 
@@ -59,24 +59,33 @@ public class SimulationCSHandler {
         constantsUniform.UniformType  = RenderingDevice.UniformType.StorageBuffer;
         constantsUniform.Binding = 0;
         constantsUniform.AddId(_constantsBufferRid);
-        
-        //TODO: check whether the gradient can be set up to be populated in-shader for first run, instead of arbitrarily on CPU-side=
-        var pressureGradientBufferByteCount = _simulationRes * _simulationRes * sizeof(float) * 4;
-        _inputPressureGradientBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientBufferByteCount);
 
-        var inputWindDataUniform = new RDUniform();
-        inputWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
-        inputWindDataUniform.Binding = 1;
-        inputWindDataUniform.AddId(_inputPressureGradientBufferRid);
+        var pressureTexFormat = new RDTextureFormat();
+        pressureTexFormat.Format = RenderingDevice.DataFormat.R8Unorm;
+        pressureTexFormat.Height = _simulationSettings.TextureResolution;
+        pressureTexFormat.Width = _simulationSettings.TextureResolution;
+        pressureTexFormat.UsageBits = RenderingDevice.TextureUsageBits.StorageBit |
+                                      RenderingDevice.TextureUsageBits.CanUpdateBit |
+                                      RenderingDevice.TextureUsageBits.CanCopyFromBit;
+                       
+        var pressureTexView = new RDTextureView();
+        _pressureTextureRid = _renderingDevice.TextureCreate(pressureTexFormat, pressureTexView);
         
-        _resultPressureGradientBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientBufferByteCount);
+        var pressureTextureUniform = new RDUniform();
+        pressureTextureUniform.UniformType = RenderingDevice.UniformType.Image;
+        pressureTextureUniform.Binding = 1;
+        
+        pressureTextureUniform.AddId(_pressureTextureRid);
+        
+        var pressureGradientBufferByteCount = _simulationRes * _simulationRes * sizeof(float) * 4;
+        _pressureGradientBufferRid = _renderingDevice.StorageBufferCreate((uint)pressureGradientBufferByteCount);
         
         var resultWindDataUniform = new RDUniform();
         resultWindDataUniform.UniformType = RenderingDevice.UniformType.StorageBuffer;
         resultWindDataUniform.Binding = 2;
-        resultWindDataUniform.AddId(_resultPressureGradientBufferRid);
+        resultWindDataUniform.AddId(_pressureGradientBufferRid);
         
-        _uniformSetRid = _renderingDevice.UniformSetCreate([constantsUniform, inputWindDataUniform, resultWindDataUniform], _computeShaderRid, 0);
+        _uniformSetRid = _renderingDevice.UniformSetCreate([constantsUniform, pressureTextureUniform, resultWindDataUniform], _computeShaderRid, 0);
     }
     
     private void CreatePipeline() {
@@ -92,8 +101,8 @@ public class SimulationCSHandler {
 
     private void DispatchShaderUpdate(WeatherState weatherState) {
         //update shader data
-        var pressureGradientByteStream = weatherState.PressureGradient.GetDataAsByteStream();
-        _renderingDevice.BufferUpdate(_inputPressureGradientBufferRid, 0, (uint)pressureGradientByteStream.Length, pressureGradientByteStream);
+        var pressureTexByteStream = weatherState.PressureTex.GetData();
+        _renderingDevice.TextureUpdate(_pressureTextureRid, 0, pressureTexByteStream);
 
         //init compute list
         var computeList = _renderingDevice.ComputeListBegin();
@@ -117,7 +126,7 @@ public class SimulationCSHandler {
         _renderingDevice.Sync();
         
         //update the model with retrieved data
-        var resultPressureGradientByteStream = _renderingDevice.BufferGetData(_resultPressureGradientBufferRid);
+        var resultPressureGradientByteStream = _renderingDevice.BufferGetData(_pressureGradientBufferRid);
         weatherState.PressureGradient.SetData(resultPressureGradientByteStream);
         
         return weatherState;

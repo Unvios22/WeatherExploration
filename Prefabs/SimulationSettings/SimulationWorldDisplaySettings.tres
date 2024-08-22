@@ -8,7 +8,9 @@ shading_mode = 0
 albedo_color = Color(1, 0, 0, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_coqxl"]
+transparency = 1
 shading_mode = 0
+vertex_color_use_as_albedo = true
 
 [sub_resource type="Gradient" id="Gradient_vmqqa"]
 
@@ -23,5 +25,6 @@ PressureTexValueGradient = SubResource("Gradient_vmqqa")
 PressureGradientDisplayInstanceMesh = ExtResource("1_y8eks")
 PressureGradientMeshesMaterial = SubResource("StandardMaterial3D_coqxl")
 TexturePlaneMaterial = SubResource("StandardMaterial3D_lxygx")
+IsDisplayBoundingBox = true
 BoundingBoxMaterial = SubResource("StandardMaterial3D_yktfk")
 DynamicElementsVerticalOffset = 0.18

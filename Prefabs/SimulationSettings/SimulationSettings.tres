@@ -6,4 +6,4 @@
 script = ExtResource("1_e54oh")
 TextureResolution = 64
 IterationsPerStep = 1
-TimeStep = 0.3
+TimeStep = 0.01

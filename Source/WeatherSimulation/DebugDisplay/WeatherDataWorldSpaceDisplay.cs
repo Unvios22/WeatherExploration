@@ -39,6 +39,8 @@ public class WeatherDataWorldSpaceDisplay {
         var meshInstanceMaterial = _simulationWorldDisplaySettings.PressureGradientMeshesMaterial;
         multimeshInstanceTemplate.SurfaceSetMaterial(0, meshInstanceMaterial);
         _multiMesh.SetMesh(multimeshInstanceTemplate);
+        
+        _multiMesh.SetUseColors(true);
 
         var multiMeshInstance3d = new MultiMeshInstance3D();
         multiMeshInstance3d.Multimesh = _multiMesh;
@@ -48,7 +50,9 @@ public class WeatherDataWorldSpaceDisplay {
     public void InitWorldSpaceDisplay() {
         GeneratePressureGradientMultimeshGrid();
         GenerateTextureDisplayPlane();
-        GenerateBoundingBox();
+        if (_simulationWorldDisplaySettings.IsDisplayBoundingBox) {
+            GenerateBoundingBox();
+        }
     }
 
     private void GeneratePressureGradientMultimeshGrid() {
@@ -134,17 +138,23 @@ public class WeatherDataWorldSpaceDisplay {
         var instanceId = 0;
         for (var x = 0; x < gridResolution; x++) {
             for (var y = 0; y < gridResolution; y++) {
+                //TODO, PPU: can generally be optimized to use "SetCustomData" to then render & modify meshes from a GPU shader
                 var instanceTransform = _worldSpaceGrid[x, y];
                 var cellGradient = gradientData[x, y];
                 var gradientVector = new Vector3(cellGradient.X, 0, cellGradient.Y);
-                var gradientVectorTargetPos = instanceTransform.Origin + gradientVector;
-
-                var rotatedInstanceTransform = instanceTransform.LookingAt(gradientVectorTargetPos, null, true);
-                _worldSpaceGrid[x, y] = rotatedInstanceTransform;
-                //TODO: also apply scale depending on the gradient magnitude
+                var gradientMagnitude = gradientVector.Length();
+                if (gradientMagnitude < 0.0001f) {
+                    _multiMesh.SetInstanceColor(instanceId, new Color(1, 1, 1, 0));
+                }
+                else {
+                    var gradientVectorTargetPos = instanceTransform.Origin + gradientVector;
+                    var rotatedInstanceTransform = instanceTransform.LookingAt(gradientVectorTargetPos, null, true);
+                    _worldSpaceGrid[x, y] = rotatedInstanceTransform;
+                    _multiMesh.SetInstanceTransform(instanceId, rotatedInstanceTransform);
+                    _multiMesh.SetInstanceColor(instanceId, new Color(1, 1, 1, 1));
+                }
                 
-                //TODO, PPU: can be optimized to use "SetCustomData" to then render & modify meshes from a GPU shader
-                _multiMesh.SetInstanceTransform(instanceId, rotatedInstanceTransform);
+                //TODO: also apply scale depending on the gradient magnitude
                 instanceId++;
             }
         }
