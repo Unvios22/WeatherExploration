@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dksf3py8vhqjv"
+path="res://.godot/imported/WeatherSimCS.glsl-431570172e4b74980c427978222a80d2.res"
+
+[deps]
+
+source_file="res://Source/Shader/WeatherSimCS.glsl"
+dest_files=["res://.godot/imported/WeatherSimCS.glsl-431570172e4b74980c427978222a80d2.res"]
+
+[params]
+

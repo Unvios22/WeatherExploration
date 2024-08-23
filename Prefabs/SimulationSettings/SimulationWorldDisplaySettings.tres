@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="SimulationWorldDisplaySettings" load_steps=7 format=3 uid="uid://co4dg75jt586g"]
+[gd_resource type="Resource" script_class="SimulationWorldDisplaySettings" load_steps=10 format=3 uid="uid://co4dg75jt586g"]
 
 [ext_resource type="Script" path="res://Source/WeatherSimulation/Model/SimulationWorldDisplaySettings.cs" id="1_2nbqv"]
 [ext_resource type="ArrayMesh" uid="uid://b4lnvj0un6sxk" path="res://Resources/ArrowMesh.res" id="1_y8eks"]
+[ext_resource type="Shader" path="res://Source/Shader/PressureTexDisplayShader.gdshader" id="2_5ccj8"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yktfk"]
 shading_mode = 0
@@ -14,9 +15,17 @@ vertex_color_use_as_albedo = true
 
 [sub_resource type="Gradient" id="Gradient_vmqqa"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lxygx"]
-shading_mode = 0
-texture_filter = 0
+[sub_resource type="Gradient" id="Gradient_jspsx"]
+offsets = PackedFloat32Array(0, 0.491296, 1)
+colors = PackedColorArray(2.88785e-07, 0.669177, 0.673548, 1, 0.878963, 0.874857, 0, 1, 0.611259, 3.80233e-06, 0.282252, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_jq8p7"]
+gradient = SubResource("Gradient_jspsx")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_86f1s"]
+render_priority = 0
+shader = ExtResource("2_5ccj8")
+shader_parameter/coloringGradient = SubResource("GradientTexture1D_jq8p7")
 
 [resource]
 script = ExtResource("1_2nbqv")
@@ -24,7 +33,7 @@ WorldSpaceGridCellSize = 0.2
 PressureTexValueGradient = SubResource("Gradient_vmqqa")
 PressureGradientDisplayInstanceMesh = ExtResource("1_y8eks")
 PressureGradientMeshesMaterial = SubResource("StandardMaterial3D_coqxl")
-TexturePlaneMaterial = SubResource("StandardMaterial3D_lxygx")
+TexturePlaneMaterial = SubResource("ShaderMaterial_86f1s")
 IsDisplayBoundingBox = true
 BoundingBoxMaterial = SubResource("StandardMaterial3D_yktfk")
 DynamicElementsVerticalOffset = 0.18

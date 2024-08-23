@@ -41,7 +41,7 @@ public class SimulationCSHandler {
     }
 
     private void LoadShader() {
-        var shaderFile = GD.Load<RDShaderFile>(Shaders.COMPUTE_SHADER);
+        var shaderFile = GD.Load<RDShaderFile>(Shaders.SIMULATION_COMPUTE_SHADER);
 
         var shaderBytecode = shaderFile.GetSpirV();
         _computeShaderRid = _renderingDevice.ShaderCreateFromSpirV(shaderBytecode);

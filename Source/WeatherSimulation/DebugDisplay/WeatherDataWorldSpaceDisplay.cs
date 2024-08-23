@@ -128,7 +128,8 @@ public class WeatherDataWorldSpaceDisplay {
 
     private void UpdatePressureTexDisplay(Image pressureTex) {
         var texture2D = ImageTexture.CreateFromImage(pressureTex);
-        _texDisplayPlane.GetActiveMaterial(0).Set("albedo_texture", texture2D);
+        var shaderMaterial = _texDisplayPlane.GetActiveMaterial(0) as ShaderMaterial;
+        shaderMaterial.SetShaderParameter("pressureTex", texture2D);
     }
 
     private void UpdatePressureGradientMultimeshDisplay(Vector4Grid pressureGradient) {
