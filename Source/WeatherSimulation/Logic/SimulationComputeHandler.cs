@@ -5,7 +5,7 @@ using WeatherExploration.Source.WeatherSimulation.Model;
 
 namespace WeatherExploration.Source.WeatherSimulation.Logic;
 
-public class SimulationCSHandler {
+public class SimulationComputeHandler {
 
     private SimulationSettings _simulationSettings;
 
@@ -26,7 +26,7 @@ public class SimulationCSHandler {
     //TODO: also - it seems that the texture resolution now has to be a multiple of 8 for this to work corectly?
     private const int ShaderWorkgroupInvocationSize = 8;
     
-    public SimulationCSHandler(SimulationSettings simulationSettings) {
+    public SimulationComputeHandler(SimulationSettings simulationSettings) {
         _simulationSettings = simulationSettings;
         _simulationRes = (int)_simulationSettings.TextureResolution;
         
@@ -126,8 +126,8 @@ public class SimulationCSHandler {
         _renderingDevice.Sync();
         
         //update the model with retrieved data
-        var resultPressureGradientByteStream = _renderingDevice.BufferGetData(_pressureGradientBufferRid);
-        weatherState.PressureGradient.SetData(resultPressureGradientByteStream);
+        var resultPressureGradientStream = _renderingDevice.BufferGetData(_pressureGradientBufferRid);
+        weatherState.PressureGradient.SetData(resultPressureGradientStream);
         
         return weatherState;
     }

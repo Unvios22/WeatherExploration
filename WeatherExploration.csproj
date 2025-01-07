@@ -14,6 +14,8 @@
     <PackageReference Update="Godot.SourceGenerators" Version="4.3.0-dev.6" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Source\Shader\ComputeShader.glsl" />
+    <Content Include="Docs\SimulationAlgorithm.md" />
+    <Content Include="Source\Shader\PressureTexDisplayShader.gdshader" />
+    <Content Include="Source\Shader\WeatherSimCS.glsl" />
   </ItemGroup>
 </Project>
