@@ -1,9 +1,6 @@
 ﻿#[compute]
 #version 460
 
-#extension GL_KHR_shader_subgroup : require
-#extension GL_KHR_compute_shader_derivatives : require
-
 layout(local_size_x = 8, local_size_y = 8) in;
 
 layout(std430, binding = 0) restrict readonly buffer Constants {
