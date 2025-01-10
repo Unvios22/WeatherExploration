@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SimulationWorldDisplaySettings" load_steps=9 format=3 uid="uid://co4dg75jt586g"]
 
+[ext_resource type="ArrayMesh" uid="uid://tybfbqwwhfyo" path="res://Resources/ArrowMeshOriginCenter.res" id="1_1hj5r"]
 [ext_resource type="Script" path="res://Source/WeatherSimulation/Model/SimulationWorldDisplaySettings.cs" id="1_2nbqv"]
-[ext_resource type="ArrayMesh" uid="uid://b4lnvj0un6sxk" path="res://Resources/ArrowMesh.res" id="1_y8eks"]
 [ext_resource type="Shader" path="res://Source/Shader/PressureTexDisplayShader.gdshader" id="2_5ccj8"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yktfk"]
@@ -32,5 +32,5 @@ IsDisplayBoundingBox = true
 BoundingBoxMaterial = SubResource("StandardMaterial3D_yktfk")
 TexturePlaneMaterial = SubResource("ShaderMaterial_wy56l")
 PressureGradientMeshesMaterial = SubResource("StandardMaterial3D_coqxl")
-PressureGradientDisplayInstanceMesh = ExtResource("1_y8eks")
+PressureGradientDisplayInstanceMesh = ExtResource("1_1hj5r")
 DynamicElementsVerticalOffset = 0.18

@@ -4,19 +4,19 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dcyx4q2m1b855"
-path="res://.godot/imported/UtilGizmoArrow.fbx-d7def147b95817ca20a5945a367b548f.scn"
+path="res://.godot/imported/UtilGizmoArrowOriginAtBase.fbx-a3efa22bb61987e9338cc6a408c60a7d.scn"
 
 [deps]
 
-source_file="res://Resources/UtilGizmoArrow.fbx"
-dest_files=["res://.godot/imported/UtilGizmoArrow.fbx-d7def147b95817ca20a5945a367b548f.scn"]
+source_file="res://Resources/UtilGizmoArrowOriginAtBase.fbx"
+dest_files=["res://.godot/imported/UtilGizmoArrowOriginAtBase.fbx-a3efa22bb61987e9338cc6a408c60a7d.scn"]
 
 [params]
 
 nodes/root_type=""
 nodes/root_name=""
 nodes/apply_root_scale=true
-nodes/root_scale=0.3
+nodes/root_scale=1.0
 nodes/import_as_skeleton_bones=false
 meshes/ensure_tangents=true
 meshes/generate_lods=true

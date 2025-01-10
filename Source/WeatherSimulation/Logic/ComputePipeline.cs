@@ -4,7 +4,7 @@ using Godot;
 
 namespace WeatherExploration.Source.WeatherSimulation.Logic;
 
-public class ComputePipeline : IComputePipelineHandler{
+public class FinalizedComputePipeline : IFinalizedComputePipeline{
     private RenderingDevice _renderingDevice;
     private Rid _computeShaderRid;
     private Rid _computePipelineRid;
@@ -13,7 +13,7 @@ public class ComputePipeline : IComputePipelineHandler{
 
     private Vector3I _workGroupSize;
     
-    public ComputePipeline() {
+    public FinalizedComputePipeline() {
         _renderingDevice = RenderingServer.CreateLocalRenderingDevice();
         _computeBuffers = new List<ComputeBuffer>();
     }
@@ -49,6 +49,7 @@ public class ComputePipeline : IComputePipelineHandler{
         bufferDataEnumerable.Add(imageBuffer.BufferData);
         var bufferDataGDArray = new Godot.Collections.Array<byte[]>(bufferDataEnumerable);
         
+        //TODO: fix this egregiousness
         if (imageBuffer.BufferData.IsEmpty()) {
             bufferDataGDArray = null;
         } 
