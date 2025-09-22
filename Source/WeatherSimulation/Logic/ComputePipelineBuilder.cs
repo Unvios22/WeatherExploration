@@ -26,18 +26,18 @@ public class ComputePipelineBuilder {
     
     public ComputePipelineBuilder BindImageBuffer(ComputeBufferId bufferId, RDTextureFormat textureFormat, byte[] bufferData) {
         var imageBuffer = new ImageBuffer();
-        imageBuffer.BufferId = bufferId;
+        imageBuffer.Id = bufferId;
         imageBuffer.TextureFormat = textureFormat;
-        imageBuffer.BufferData = bufferData;
+        imageBuffer.Data = bufferData;
         _computeBuffers.Add(imageBuffer);
         return this;
     }
 
     public ComputePipelineBuilder BindStorageBuffer(ComputeBufferId bufferId, uint bufferSize, byte[] bufferData) {
         var storageBuffer = new StorageBuffer();
-        storageBuffer.BufferId = bufferId;
+        storageBuffer.Id = bufferId;
         storageBuffer.BufferSize = bufferSize;
-        storageBuffer.BufferData = bufferData;
+        storageBuffer.Data = bufferData;
         _computeBuffers.Add(storageBuffer);
         return this;
     }
@@ -54,7 +54,7 @@ public class ComputePipelineBuilder {
         return this;
     }
 
-    public IComputePipelineHandler FinalizePipeline() {
+    public IFinalizedComputePipeline FinalizePipeline() {
         _computePipeline.FinalizePipeline();
         return _computePipeline;
     }

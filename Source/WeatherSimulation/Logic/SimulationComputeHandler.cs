@@ -10,7 +10,7 @@ public class SimulationComputeHandler {
     private SimulationSettings _simulationSettings;
     private readonly int _simulationRes;
     
-    private IComputePipelineHandler _computePipeline;
+    private IFinalizedComputePipeline _computePipeline;
 
     //update to be current with the invocation set in actual compute shader (defines amount of dispatched workgroups here)
     //TODO: also - it seems that the texture resolution now has to be a multiple of 8 for this to work correctly?
